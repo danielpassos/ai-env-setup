@@ -25,3 +25,5 @@ packages:
 
   - source: "mattpocock/skills"
     skills: ["wayfinder"]
+
+  - source: "blader/humanizer"

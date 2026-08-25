@@ -21,9 +21,17 @@
 #   repo doesn't otherwise manage. If both are set, `only` wins.
 
 packages:
+  # Vercel Engineering's official pack: Next.js/Vercel cost + performance
+  # optimization, React best practices, deployment, and web design/writing
+  # guidelines.
   - source: "vercel-labs/agent-skills"
 
+  # Only "wayfinder" - breaks work too large for one agent session into a
+  # shared map of decision tickets on the issue tracker, resolved one at a
+  # time. The rest of this repo's 36 skills weren't picked.
   - source: "mattpocock/skills"
     skills: ["wayfinder"]
 
+  # Rewrites AI-sounding prose (stock phrasing, filler, passive voice, etc.)
+  # to read naturally without changing what it says.
   - source: "blader/humanizer"

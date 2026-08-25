@@ -35,3 +35,8 @@ packages:
   # Rewrites AI-sounding prose (stock phrasing, filler, passive voice, etc.)
   # to read naturally without changing what it says.
   - source: "blader/humanizer"
+
+  # Material Design 3 (Material You): components, design tokens, theming,
+  # responsive layout, and MD3 compliance audits. Primarily Jetpack Compose
+  # Material3, also Flutter and (maintenance-mode) web.
+  - source: "hamen/material-3-skill"

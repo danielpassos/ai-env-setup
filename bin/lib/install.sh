@@ -34,7 +34,7 @@ install::npm() {
   fi
 
   log_info "syncing npm package: $package@$version"
-  npm install --global --silent "${package}@${version}"
+  run_quiet npm install --global "${package}@${version}" || die "failed to install $package via npm"
   log_success "installed: $package@$version"
 }
 
@@ -43,10 +43,10 @@ install::brew() {
 
   if brew list $cask_flag "$package" >/dev/null 2>&1; then
     log_info "already installed via brew: $package, checking for updates"
-    brew upgrade $cask_flag "$package" >/dev/null 2>&1 || true
+    run_quiet brew upgrade $cask_flag "$package" || true
   else
     log_info "installing via brew: $package"
-    brew install $cask_flag "$package"
+    run_quiet brew install $cask_flag "$package" || die "failed to install $package via brew"
   fi
 
   log_success "up to date: $package"

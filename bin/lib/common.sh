@@ -28,6 +28,17 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
 }
 
+# run_quiet CMD... - runs a command, capturing its combined stdout+stderr.
+# On success the output is discarded, so only our own log lines show. On
+# failure the captured output is dumped (so the real error is visible)
+# before the original exit status is returned.
+run_quiet() {
+  local out status=0
+  out="$("$@" 2>&1)" || status=$?
+  [[ "$status" -ne 0 ]] && printf '%s\n' "$out" >&2
+  return "$status"
+}
+
 ensure_macos() {
   [[ "$(uname -s)" == "Darwin" ]] || die "ai-env-setup only supports macOS"
 }

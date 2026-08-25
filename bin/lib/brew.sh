@@ -23,6 +23,6 @@ brew::bundle() {
   [[ -f "$brewfile" ]] || die "Brewfile not found at $brewfile"
 
   log_info "applying Brewfile (this also installs yq, used by later steps)"
-  brew bundle --file="$brewfile"
+  run_quiet brew bundle --file="$brewfile" -q || die "brew bundle failed"
   log_success "brew bundle complete"
 }

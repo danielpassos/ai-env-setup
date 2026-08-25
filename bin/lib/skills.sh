@@ -63,7 +63,14 @@ skills::sync() {
     [[ "${#skills_list[@]}" -gt 0 ]] && args+=(--skill "${skills_list[@]}")
     [[ "${#agents_list[@]}" -gt 0 ]] && args+=(--agent "${agents_list[@]}")
 
-    npx --yes skills "${args[@]}"
-    log_success "synced: $source"
+    local out status=0
+    out="$(npx --yes skills "${args[@]}" 2>&1)" || status=$?
+
+    if [[ "$status" -ne 0 ]] || grep -q "Failed to install" <<<"$out"; then
+      printf '%s\n' "$out" >&2
+      log_warn "$source: some skills failed to install (see output above)"
+    else
+      log_success "synced: $source"
+    fi
   done
 }

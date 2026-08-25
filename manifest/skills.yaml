@@ -53,3 +53,10 @@ packages:
   # duplicating it. README documents a manual git-clone install, but the
   # repo is plain SKILL.md files and `skills add` discovers all 25 fine.
   - source: "skydoves/compose-performance-skills"
+
+  # wondelai: Nielsen's 10 heuristics + Krug's "Don't Make Me Think" usability
+  # audit framework - severity-rated interface reviews. Only "ux-heuristics"
+  # from this repo's 62 skills. Plain SKILL.md, no path assumptions - clean
+  # fit for `skills add` on every tool.
+  - source: "wondelai/skills"
+    skills: ["ux-heuristics"]

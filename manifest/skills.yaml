@@ -45,3 +45,11 @@ packages:
   # performance, component design, animations, testing) and Kotlin
   # (coroutines/flow, control flow, API design) plus Gradle workflows.
   - source: "chrisbanes/skills"
+
+  # skydoves: 25 skills focused specifically on Jetpack Compose performance -
+  # recomposition, stability inference, LazyColumn/prefetch tuning,
+  # Modifier.Node migration, baseline profiles, R8/release-mode measurement,
+  # and Compose HotSwan. Complements chrisbanes/skills rather than
+  # duplicating it. README documents a manual git-clone install, but the
+  # repo is plain SKILL.md files and `skills add` discovers all 25 fine.
+  - source: "skydoves/compose-performance-skills"

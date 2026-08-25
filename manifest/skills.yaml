@@ -40,3 +40,8 @@ packages:
   # responsive layout, and MD3 compliance audits. Primarily Jetpack Compose
   # Material3, also Flutter and (maintenance-mode) web.
   - source: "hamen/material-3-skill"
+
+  # Chris Banes (Jetpack Compose/Accompanist, Google): Compose (state/effects,
+  # performance, component design, animations, testing) and Kotlin
+  # (coroutines/flow, control flow, API design) plus Gradle workflows.
+  - source: "chrisbanes/skills"

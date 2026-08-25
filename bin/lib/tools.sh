@@ -76,27 +76,41 @@ tools::select() {
     all_options+=("$(tools::name "$id"):$id")
   done
 
-  local previous=() preselect=()
+  # Not using gum's --selected to pre-check the previous pick: in gum 2.0.0
+  # a preselected item left untouched is silently dropped from the output
+  # instead of being returned, which corrupted the selection. Surface the
+  # previous pick as a hint in the header instead, and let the user re-tick
+  # it explicitly.
+  local previous=() previous_names=()
   while IFS= read -r line; do previous+=("$line"); done < <(tools::_previous_selection)
   if [[ "${#previous[@]}" -gt 0 ]]; then
     for id in "${previous[@]}"; do
-      preselect+=("$(tools::name "$id"):$id")
+      previous_names+=("$(tools::name "$id")")
     done
   fi
-  local preselect_csv=""
-  if [[ "${#preselect[@]}" -gt 0 ]]; then
-    preselect_csv="$(
+  local header="Which AI tools should ai-env-setup configure?"
+  if [[ "${#previous_names[@]}" -gt 0 ]]; then
+    header+=" (previously: $(
       IFS=,
-      echo "${preselect[*]}"
-    )"
+      echo "${previous_names[*]}"
+    ))"
   fi
 
-  local chosen_ids=()
-  while IFS= read -r line; do chosen_ids+=("$line"); done < <(gum choose --no-limit \
-    --header "Which AI tools should ai-env-setup configure?" \
+  local raw_ids=()
+  while IFS= read -r line; do raw_ids+=("$line"); done < <(gum choose --no-limit \
+    --header "$header" \
     --label-delimiter=":" \
-    --selected="$preselect_csv" \
     "${all_options[@]}")
+
+  # Defensive: only trust values gum returns that are actually known ids.
+  local chosen_ids=()
+  if [[ "${#raw_ids[@]}" -gt 0 ]]; then
+    for id in "${raw_ids[@]}"; do
+      for i in "${all_ids[@]}"; do
+        [[ "$id" == "$i" ]] && chosen_ids+=("$id")
+      done
+    done
+  fi
 
   if [[ "${#chosen_ids[@]}" -eq 0 ]]; then
     log_warn "no tools selected, nothing to install/configure"

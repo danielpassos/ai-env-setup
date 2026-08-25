@@ -1,0 +1,44 @@
+# Registry of AI tools ai-env-setup can install and configure.
+# Adding a new tool = adding an entry here. No code changes required.
+#
+# install.method: npm | brew_cask | brew_formula | none (installed manually)
+# links: source is a path relative to the repo root, symlinked to
+#   <home>/<target>. Use config/<id>/... for config specific to one tool, or
+#   a shared root path (e.g. skills/) for things multiple tools can reuse.
+#   expand: true syncs each child of source as its own symlink instead of
+#   the whole directory (used for skills/, where you want each item
+#   individually backed-up/linked rather than the whole folder as one unit).
+# skills_agent: this tool's agent id in the `skills` CLI (manifest/skills.yaml's
+#   `only` field), if different from this tool's own id. Omit when they match.
+
+tools:
+  - id: claude
+    name: "Claude Code"
+    home: "~/.claude"
+    skills_agent: "claude-code"
+    install:
+      method: brew_cask
+      package: "claude-code"
+    links:
+      - source: "config/claude/CLAUDE.md"
+        target: "CLAUDE.md"
+      - source: "skills"
+        target: "skills"
+        expand: true
+
+  - id: codex
+    name: "Codex CLI"
+    home: "~/.codex"
+    install:
+      method: brew_cask
+      package: "codex"
+    links:
+      - source: "skills"
+        target: "skills"
+        expand: true
+
+  - id: cursor
+    name: "Cursor"
+    home: "~/.cursor"
+    install: null
+    links: [ ]

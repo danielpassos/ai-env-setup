@@ -1,0 +1,24 @@
+# External skill packages installed via the `skills` CLI (npx skills add).
+# https://skills.sh
+#
+# Distinct from the root skills/ dir: that's skills you author yourself and
+# link in via manifest/tools.yaml. This is for pulling in someone else's
+# published skill package wholesale.
+#
+# packages[].source: a GitHub owner/repo (or full URL), same as `skills add <package>`
+# packages[].skills: optional - only install these skill names from the
+#   package (omit to install everything it offers)
+# packages[].only: optional - only install for these tool ids, using this
+#   repo's own ids from manifest/tools.yaml (e.g. "claude", "codex", "cursor").
+#   Each id is translated to that tool's skills_agent before being passed to
+#   the CLI - this is the one to reach for normally.
+# packages[].agents: optional - same idea as `only`, but takes the `skills`
+#   CLI's own agent ids directly (they don't always match this repo's tool
+#   ids - notably "claude-code", not "claude"). Only useful for agents this
+#   repo doesn't otherwise manage. If both are set, `only` wins.
+
+packages:
+  - source: "vercel-labs/agent-skills"
+
+  - source: "mattpocock/skills"
+    skills: ["wayfinder"]

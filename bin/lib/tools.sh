@@ -75,14 +75,18 @@ tools::select() {
 
   local previous=() preselect=()
   while IFS= read -r line; do previous+=("$line"); done < <(tools::_previous_selection)
-  for id in "${previous[@]}"; do
-    preselect+=("$(tools::name "$id")")
-  done
-  local preselect_csv
-  preselect_csv="$(
-    IFS=,
-    echo "${preselect[*]}"
-  )"
+  if [[ "${#previous[@]}" -gt 0 ]]; then
+    for id in "${previous[@]}"; do
+      preselect+=("$(tools::name "$id")")
+    done
+  fi
+  local preselect_csv=""
+  if [[ "${#preselect[@]}" -gt 0 ]]; then
+    preselect_csv="$(
+      IFS=,
+      echo "${preselect[*]}"
+    )"
+  fi
 
   local chosen_names=()
   while IFS= read -r line; do chosen_names+=("$line"); done < <(gum choose --no-limit \

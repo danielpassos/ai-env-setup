@@ -7,6 +7,26 @@ touches what's drifted from its manifest. Adding a tool or an external skill
 package is a `manifest/*.yaml` edit, not a code change - see README.md for
 the schema.
 
+## Recommending skills/tools in this repo
+
+When suggesting a skill package, CLI, or config, evaluate it against a
+**clean machine install**, not against what's already active in the current
+session. This repo's whole point is reproducing an identical setup on a
+fresh machine via `bin/setup.sh` - if a skill only shows up because it
+happens to be preinstalled on the machine you're currently running on (e.g.
+a Claude Code plugin pulled from `~/.claude/plugins/cache/...` via
+`/plugin marketplace`, not this repo's `manifest/skills.yaml`), it will NOT
+exist after a clean install and isn't a real recommendation for this repo -
+say so explicitly rather than presenting it as available.
+
+Also weigh whether a recommendation works **for every AI tool this repo
+manages** (Claude Code, Codex, Cursor, and whichever "universal" agents are
+selected - see `manifest/tools.yaml`), not just Claude Code. A package only
+installable as a Claude Code plugin, or scoped with `only`/`agents` to a
+single tool, is a narrower recommendation than one that installs cleanly via
+`manifest/skills.yaml` for whatever tools the user selects - flag that
+narrowing instead of glossing over it.
+
 ## Non-obvious gotchas (hard-won this repo's history)
 
 - **macOS's `/bin/bash` is 3.2**, not 4+ (Apple won't ship GPLv3). Under

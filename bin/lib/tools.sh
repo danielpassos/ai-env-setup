@@ -88,7 +88,9 @@ tools::select() {
       previous_names+=("$(tools::name "$id")")
     done
   fi
-  local header="Which AI tools should ai-env-setup configure?"
+  # gum's toggle key is 'x', not the space bar most checkbox UIs use - and
+  # it's easy to miss that in the small footer hint, so spell it out.
+  local header="Which AI tools should ai-env-setup configure? (x to toggle, enter to confirm)"
   if [[ "${#previous_names[@]}" -gt 0 ]]; then
     header+=" (previously: $(
       IFS=,

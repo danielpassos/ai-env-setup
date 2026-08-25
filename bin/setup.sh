@@ -54,7 +54,11 @@ main() {
     done
   fi
 
-  skills::sync
+  if [[ "${#selected[@]}" -gt 0 ]]; then
+    skills::sync "${selected[@]}"
+  else
+    skills::sync
+  fi
 
   self_link_path
 

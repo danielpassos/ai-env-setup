@@ -9,9 +9,12 @@
 # packages[].skills: optional - only install these skill names from the
 #   package (omit to install everything it offers)
 # packages[].only: optional - only install for these tool ids, using this
-#   repo's own ids from manifest/tools.yaml (e.g. "claude", "codex", "cursor").
-#   Each id is translated to that tool's skills_agent before being passed to
-#   the CLI - this is the one to reach for normally.
+#   repo's own ids from manifest/tools.yaml (e.g. "claude", "codex", "cursor"),
+#   regardless of which tools were selected in this run. Each id is
+#   translated to that tool's skills_agent before being passed to the CLI.
+#   Omit this (the normal case) and the package installs for whichever tools
+#   you selected in this run instead - never for every agent the `skills`
+#   CLI happens to know about.
 # packages[].agents: optional - same idea as `only`, but takes the `skills`
 #   CLI's own agent ids directly (they don't always match this repo's tool
 #   ids - notably "claude-code", not "claude"). Only useful for agents this

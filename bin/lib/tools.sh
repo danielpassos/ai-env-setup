@@ -67,17 +67,20 @@ tools::select() {
 
   require_cmd gum
 
-  local all_ids=() all_names=() id line
+  # Options are passed to gum as "label:id" pairs (--label-delimiter) so it
+  # displays the friendly name but hands back the stable manifest id
+  # directly - no need to round-trip through name-matching afterwards.
+  local all_ids=() all_options=() id line
   while IFS= read -r line; do all_ids+=("$line"); done < <(tools::all_ids)
   for id in "${all_ids[@]}"; do
-    all_names+=("$(tools::name "$id")")
+    all_options+=("$(tools::name "$id"):$id")
   done
 
   local previous=() preselect=()
   while IFS= read -r line; do previous+=("$line"); done < <(tools::_previous_selection)
   if [[ "${#previous[@]}" -gt 0 ]]; then
     for id in "${previous[@]}"; do
-      preselect+=("$(tools::name "$id")")
+      preselect+=("$(tools::name "$id"):$id")
     done
   fi
   local preselect_csv=""
@@ -88,24 +91,18 @@ tools::select() {
     )"
   fi
 
-  local chosen_names=()
-  while IFS= read -r line; do chosen_names+=("$line"); done < <(gum choose --no-limit \
+  local chosen_ids=()
+  while IFS= read -r line; do chosen_ids+=("$line"); done < <(gum choose --no-limit \
     --header "Which AI tools should ai-env-setup configure?" \
+    --label-delimiter=":" \
     --selected="$preselect_csv" \
-    "${all_names[@]}")
+    "${all_options[@]}")
 
-  if [[ "${#chosen_names[@]}" -eq 0 ]]; then
+  if [[ "${#chosen_ids[@]}" -eq 0 ]]; then
     log_warn "no tools selected, nothing to install/configure"
     tools::_save_selection
     return 0
   fi
-
-  local chosen_ids=() name
-  for name in "${chosen_names[@]}"; do
-    for id in "${all_ids[@]}"; do
-      [[ "$(tools::name "$id")" == "$name" ]] && chosen_ids+=("$id")
-    done
-  done
 
   tools::_save_selection "${chosen_ids[@]}"
   printf '%s\n' "${chosen_ids[@]}"

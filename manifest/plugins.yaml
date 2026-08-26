@@ -1,0 +1,17 @@
+# Claude Code plugins - packages only ever published as a Claude Code
+# plugin marketplace, with no generic `skills add` equivalent (see
+# manifest/skills.yaml). Unlike that file, this one is inherently
+# Claude-Code-only: plugin marketplaces are a Claude Code concept, so every
+# entry here only ever installs for the `claude` tool - there's no
+# `only`/`agents` field to widen scope, and there never will be.
+#
+# packages[].marketplace_source: owner/repo (or full URL) passed to
+#   `claude plugin marketplace add <source>` - same as the interactive
+#   `/plugin marketplace add`.
+# packages[].marketplace: the marketplace's own name/id, from its
+#   `.claude-plugin/marketplace.json` (`name`/`id` field) - read from that
+#   file rather than guessed, since it doesn't have to match the repo name.
+# packages[].plugin: the plugin name to install, from the marketplace's
+#   `plugins[].name` - passed as `claude plugin install <plugin>@<marketplace>`.
+
+packages: []

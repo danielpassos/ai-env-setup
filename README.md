@@ -20,7 +20,10 @@ This clones the repo to `~/.ai-env-setup` and runs `bin/setup.sh`, which:
    home directory
 4. installs the skill packages listed in `manifest/skills.yaml`, via
    `npx skills add`
-5. links itself onto your `PATH` as `ai-env-setup`
+5. installs the Claude Code plugins listed in `manifest/plugins.yaml`, via
+   `claude plugin marketplace add` + `claude plugin install` (only when
+   `claude` is among the selected tools)
+6. links itself onto your `PATH` as `ai-env-setup`
 
 ## Update
 
@@ -44,6 +47,7 @@ Brewfile                    # ai-env-setup's own deps: yq, gum (not the AI tools
 manifest/
   tools.yaml                 # the registry: every AI tool ai-env-setup knows about
   skills.yaml                 # skill packages pulled in via `npx skills add`
+  plugins.yaml                 # Claude Code plugins pulled in via `claude plugin install`
 skills/<name>/               # my own skills, shared - any tool's manifest entry can link them in
 config/
   claude/                     # config specific to Claude Code, mirrored into ~/.claude/
@@ -59,6 +63,7 @@ bin/
     install.sh                    # installs a selected tool's CLI (npm / brew_cask / brew_formula)
     links.sh                      # symlinks a selected tool's declared links into its home dir
     skills.sh                      # installs manifest/skills.yaml via `npx skills add`
+    plugins.sh                      # installs manifest/plugins.yaml via `claude plugin install`
 install.sh                    # curl-pipeable bootstrap (clone + hand off to setup.sh)
 ```
 
@@ -116,3 +121,26 @@ via each tool's `skills_agent` field) - use it unless you need to target an
 agent this repo doesn't otherwise manage, in which case `agents` takes the
 CLI's own agent ids directly (pass a bogus `--agent` value to
 `npx skills add --help` to see the full accepted list).
+
+## Adding a Claude Code plugin
+
+Some packages are only ever published as a Claude Code plugin marketplace,
+with no generic `skills add` equivalent - add those to
+`manifest/plugins.yaml` instead. Unlike `manifest/skills.yaml`, this is
+inherently Claude-Code-only (plugin marketplaces are a Claude Code concept),
+so there's no `only`/`agents` field to widen scope to other tools:
+
+```yaml
+packages:
+  - marketplace_source: "multica-ai/andrej-karpathy-skills"
+    marketplace: "karpathy-skills"    # from the repo's .claude-plugin/marketplace.json
+    plugin: "andrej-karpathy-skills"  # from that file's plugins[].name
+```
+
+This runs `claude plugin marketplace add <marketplace_source>` then
+`claude plugin install <plugin>@<marketplace> -y` for every entry, but only
+when `claude` is among the tools selected this run - both commands are
+idempotent, so re-running is a no-op success. `marketplace` isn't guessed
+from `marketplace_source`; read it from the target repo's own
+`.claude-plugin/marketplace.json` since it doesn't have to match the repo
+name.

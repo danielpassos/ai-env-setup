@@ -21,10 +21,12 @@
 #   repo doesn't otherwise manage. If both are set, `only` wins.
 
 packages:
-  # Vercel Engineering's official pack: Next.js/Vercel cost + performance
-  # optimization, React best practices, deployment, and web design/writing
-  # guidelines.
-  - source: "vercel-labs/agent-skills"
+  # Only "find-skills" - teaches the agent to search/install other skills
+  # via the `npx skills` CLI when asked "is there a skill for X". Note this
+  # is a different repo from vercel-labs/agent-skills (which has no
+  # find-skills of its own).
+  - source: "vercel-labs/skills"
+    skills: ["find-skills"]
 
   # Only "wayfinder" - breaks work too large for one agent session into a
   # shared map of decision tickets on the issue tracker, resolved one at a

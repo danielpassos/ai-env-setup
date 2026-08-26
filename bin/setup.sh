@@ -4,7 +4,10 @@
 # once self_link_path has put it on your PATH.
 set -euo pipefail
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# realpath (not just dirname) so this still finds lib/ when invoked through
+# the self_link_path symlink at ~/.local/bin/ai-env-setup - BASH_SOURCE is
+# the symlink path itself, and dirname alone doesn't follow it.
+script_dir="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd)"
 
 # shellcheck source=lib/common.sh
 source "$script_dir/lib/common.sh"

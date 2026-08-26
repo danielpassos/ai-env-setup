@@ -14,4 +14,10 @@
 # packages[].plugin: the plugin name to install, from the marketplace's
 #   `plugins[].name` - passed as `claude plugin install <plugin>@<marketplace>`.
 
-packages: []
+packages:
+  # Behavioral guidelines distilled from Andrej Karpathy's observations on
+  # common LLM coding mistakes (think before coding, simplicity first,
+  # surgical changes, goal-driven execution).
+  - marketplace_source: "multica-ai/andrej-karpathy-skills"
+    marketplace: "karpathy-skills"
+    plugin: "andrej-karpathy-skills"

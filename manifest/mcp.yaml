@@ -1,0 +1,34 @@
+# Remote MCP (Model Context Protocol) servers to configure for the tools
+# that support them. Only hosted HTTP endpoints are covered here, not
+# local/stdio servers.
+#
+# servers[].id: stable id, used as both the manifest key and the server
+#   name registered with each tool.
+# servers[].url: the server's remote HTTP endpoint.
+# servers[].only: optional - only configure for these tool ids (this repo's
+#   ids from manifest/tools.yaml), regardless of which tools were selected
+#   this run. Omit (the normal case) to configure for whichever tools you
+#   selected this run instead.
+#
+# Claude Code and Codex CLI get a real client-side entry via their own
+# `mcp add` subcommand (see bin/lib/mcp.sh). Cursor has no such CLI, so its
+# entry is written directly into ~/.cursor/mcp.json instead.
+#
+# Both servers below use OAuth 2.1 - this only writes the config entry
+# pointing at the server, it can't complete the login for you. Claude Code
+# and Cursor prompt for OAuth on first use inside the tool; Codex CLI needs
+# one manual `codex mcp login <id>` after the entry exists.
+
+servers:
+  # Search/read/create/update Notion pages and databases.
+  # https://github.com/makenotion/notion-mcp-server
+  - id: notion
+    url: "https://mcp.notion.com/mcp"
+
+  # Confluence + Jira + Jira Service Management + Bitbucket + Compass, scoped
+  # to whatever the signed-in Atlassian account can already access. Atlassian
+  # doesn't split these into separate endpoints, so one entry covers both
+  # Notion's Confluence-equivalent and Jira.
+  # https://github.com/atlassian/atlassian-mcp-server
+  - id: atlassian
+    url: "https://mcp.atlassian.com/v1/mcp"

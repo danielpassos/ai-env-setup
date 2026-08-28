@@ -23,7 +23,9 @@ This clones the repo to `~/.ai-env-setup` and runs `bin/setup.sh`, which:
 5. installs the Claude Code plugins listed in `manifest/plugins.yaml`, via
    `claude plugin marketplace add` + `claude plugin install` (only when
    `claude` is among the selected tools)
-6. links itself onto your `PATH` as `ai-env-setup`
+6. configures the remote MCP servers listed in `manifest/mcp.yaml` for each
+   selected tool
+7. links itself onto your `PATH` as `ai-env-setup`
 
 ## Update
 
@@ -48,6 +50,7 @@ manifest/
   tools.yaml                 # the registry: every AI tool ai-env-setup knows about
   skills.yaml                 # skill packages pulled in via `npx skills add`
   plugins.yaml                 # Claude Code plugins pulled in via `claude plugin install`
+  mcp.yaml                     # remote MCP servers configured per-tool
 skills/<name>/               # my own skills, shared - any tool's manifest entry can link them in
 config/
   claude/                     # config specific to Claude Code, mirrored into ~/.claude/
@@ -64,6 +67,7 @@ bin/
     links.sh                      # symlinks a selected tool's declared links into its home dir
     skills.sh                      # installs manifest/skills.yaml via `npx skills add`
     plugins.sh                      # installs manifest/plugins.yaml via `claude plugin install`
+    mcp.sh                           # configures manifest/mcp.yaml per-tool
 install.sh                    # curl-pipeable bootstrap (clone + hand off to setup.sh)
 ```
 
@@ -144,3 +148,34 @@ idempotent, so re-running is a no-op success. `marketplace` isn't guessed
 from `marketplace_source`; read it from the target repo's own
 `.claude-plugin/marketplace.json` since it doesn't have to match the repo
 name.
+
+## Adding an MCP server
+
+Add a remote (hosted HTTP) MCP server to `manifest/mcp.yaml`:
+
+```yaml
+servers:
+  - id: notion
+    url: "https://mcp.notion.com/mcp"
+    # only: ["claude"]  # optional - only configure for these tools (this repo's ids)
+```
+
+Only hosted HTTP endpoints are supported - there's no schema here for a
+local/stdio server. `only` works like `manifest/skills.yaml`'s: omit it and
+the server is configured for whichever tools you selected this run instead
+of every tool.
+
+Each selected tool gets the entry written a different way:
+
+- **Claude Code**: `claude mcp add --transport http --scope user <id> <url>`
+- **Codex CLI**: `codex mcp add <id> --url <url>`
+- **Cursor**: no MCP CLI exists, so `bin/lib/mcp.sh` writes
+  `.mcpServers.<id>.url` into `~/.cursor/mcp.json` directly via `yq`
+
+A tool id with no case in `bin/lib/mcp.sh`'s dispatch (i.e. not one of the
+three above) is skipped with a warning rather than failing the run.
+
+If the server requires OAuth (as both `notion` and `atlassian` do), this
+only writes the config entry - it can't complete the login for you. Claude
+Code and Cursor prompt for it on first use inside the tool; Codex CLI needs
+one manual `codex mcp login <id>` after the entry exists.

@@ -23,6 +23,8 @@ source "$script_dir/lib/links.sh"
 source "$script_dir/lib/skills.sh"
 # shellcheck source=lib/plugins.sh
 source "$script_dir/lib/plugins.sh"
+# shellcheck source=lib/mcp.sh
+source "$script_dir/lib/mcp.sh"
 
 self_link_path() {
   local bin_dir="$HOME/.local/bin"
@@ -62,9 +64,11 @@ main() {
   if [[ "${#selected[@]}" -gt 0 ]]; then
     skills::sync "${selected[@]}"
     plugins::sync "${selected[@]}"
+    mcp::sync "${selected[@]}"
   else
     skills::sync
     plugins::sync
+    mcp::sync
   fi
 
   self_link_path

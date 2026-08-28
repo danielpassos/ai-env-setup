@@ -62,3 +62,13 @@ packages:
   # fit for `skills add` on every tool.
   - source: "wondelai/skills"
     skills: ["ux-heuristics"]
+
+  # JuliusBrussee/caveman: 20 skills - ultra-compressed "caveman" output mode
+  # (~65% fewer tokens) plus workflow skills (investigate-first, lean-build,
+  # migration, safe-refactor, surgical-patch, verify-and-stop) and subagent
+  # delegation (cavecrew). A few skills (caveman-setup/-manage/-optimize/
+  # -evidence-review) are optional integrations with the paid Caveman Cloud
+  # gateway - inert unless set up separately, everything else is standalone.
+  # This `skills add` install is the repo's own documented lightweight path
+  # (vs. its separate `@caveman-ai/cli` full installer with hooks/statusline).
+  - source: "JuliusBrussee/caveman"

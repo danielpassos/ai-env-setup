@@ -30,6 +30,14 @@ packages:
     marketplace: "claude-plugins-official"
     plugin: "claude-code-setup"
 
+  # Browser automation and end-to-end testing MCP server by Microsoft -
+  # lets Claude interact with web pages, take screenshots, fill forms,
+  # click elements, and run automated browser testing workflows.
+  # https://claude.com/plugins/playwright
+  - marketplace_source: "anthropics/claude-plugins-official"
+    marketplace: "claude-plugins-official"
+    plugin: "playwright"
+
   # Persistent memory across sessions: captures what happened during a
   # session, compresses it, and injects relevant context back into future
   # ones. The repo itself is the marketplace (only its `plugin` subdir); it

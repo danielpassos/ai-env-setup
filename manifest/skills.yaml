@@ -72,3 +72,11 @@ packages:
   # This `skills add` install is the repo's own documented lightweight path
   # (vs. its separate `@caveman-ai/cli` full installer with hooks/statusline).
   - source: "JuliusBrussee/caveman"
+
+  # Strix (usestrix): 9 skills for autonomous AI penetration testing - web
+  # app, API, and code-level security testing (OWASP Top 10 and beyond),
+  # CI security gating, and fixing/verifying findings. Wraps the `strix`
+  # CLI (self-hosted, BYO LLM key, needs Docker) or the managed
+  # app.strix.ai cloud - neither is installed by this repo, the skills just
+  # know how to drive whichever one is available.
+  - source: "usestrix/strix"

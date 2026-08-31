@@ -21,3 +21,11 @@ packages:
   - marketplace_source: "multica-ai/andrej-karpathy-skills"
     marketplace: "karpathy-skills"
     plugin: "andrej-karpathy-skills"
+
+  # Anthropic's own plugin: analyzes a codebase and recommends tailored
+  # Claude Code automations (hooks, skills, MCP servers, subagents, slash
+  # commands). Read-only - suggests, doesn't modify anything.
+  # https://claude.com/plugins/claude-code-setup
+  - marketplace_source: "anthropics/claude-plugins-official"
+    marketplace: "claude-plugins-official"
+    plugin: "claude-code-setup"

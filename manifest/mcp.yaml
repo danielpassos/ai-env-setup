@@ -32,3 +32,10 @@ servers:
   # https://github.com/atlassian/atlassian-mcp-server
   - id: atlassian
     url: "https://mcp.atlassian.com/v1/mcp"
+
+  # Query/manage Supabase projects - tables, migrations, edge functions,
+  # logs. Unscoped (no project_ref), so it covers whichever project you
+  # authenticate into.
+  # https://supabase.com/docs/guides/getting-started/mcp
+  - id: supabase
+    url: "https://mcp.supabase.com/mcp"

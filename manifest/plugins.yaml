@@ -29,3 +29,13 @@ packages:
   - marketplace_source: "anthropics/claude-plugins-official"
     marketplace: "claude-plugins-official"
     plugin: "claude-code-setup"
+
+  # Persistent memory across sessions: captures what happened during a
+  # session, compresses it, and injects relevant context back into future
+  # ones. The repo itself is the marketplace (only its `plugin` subdir); it
+  # also offers "claude-mem-cowork" (cloud-session variant), not installed
+  # here.
+  # https://github.com/thedotmack/claude-mem
+  - marketplace_source: "thedotmack/claude-mem"
+    marketplace: "thedotmack"
+    plugin: "claude-mem"

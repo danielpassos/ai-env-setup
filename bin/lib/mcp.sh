@@ -10,12 +10,49 @@
 # directly into ~/.cursor/mcp.json via yq.
 
 MCP_MANIFEST="$AI_ENV_SETUP_HOME/manifest/mcp.yaml"
+MCP_STATE_FILE="$HOME/.config/ai-env-setup/selected-mcp"
 
-readonly MCP_MANIFEST
+readonly MCP_MANIFEST MCP_STATE_FILE
 
 mcp::_read_list() {
   local index="$1" field="$2"
   yq e ".servers[$index].${field} // [] | .[]" "$MCP_MANIFEST" 2>/dev/null
+}
+
+# mcp::select -> prints the chosen server ids, one per line, and persists
+# them to MCP_STATE_FILE as next run's default (same mechanics as
+# tools::select/skills::select/plugins::select, via picker::select).
+#
+# mcp::sync reads this same state file to know what to actually sync, so
+# this must run before it in the same invocation (see bin/setup.sh).
+mcp::select() {
+  if [[ ! -f "$MCP_MANIFEST" ]]; then
+    return 0
+  fi
+
+  local count
+  count="$(yq e '.servers | length' "$MCP_MANIFEST")"
+
+  if [[ -z "$count" || "$count" -eq 0 ]]; then
+    return 0
+  fi
+
+  local i id all_options=()
+  for ((i = 0; i < count; i++)); do
+    id="$(yq e ".servers[$i].id" "$MCP_MANIFEST")"
+    all_options+=("$id:$id")
+  done
+
+  picker::select "$MCP_STATE_FILE" "Which MCP servers should ai-env-setup configure?" \
+    < <(printf '%s\n' "${all_options[@]}")
+}
+
+mcp::_is_selected() {
+  local id="$1" selected
+  while IFS= read -r selected; do
+    [[ "$selected" == "$id" ]] && return 0
+  done < <(picker::_previous_selection "$MCP_STATE_FILE")
+  return 1
 }
 
 mcp::_sync_claude() {
@@ -77,6 +114,7 @@ mcp::_sync_cursor() {
 
 # mcp::sync SELECTED_TOOL_ID... - selected tool ids from tools::select, used
 # as the default target for any server that doesn't declare its own `only`.
+# Only syncs servers selected via mcp::select.
 mcp::sync() {
   local selected_ids=("$@")
 
@@ -93,10 +131,20 @@ mcp::sync() {
     return 0
   fi
 
+  if [[ ! -f "$MCP_STATE_FILE" ]]; then
+    log_warn "no MCP servers selected (run mcp::select first), skipping"
+    return 0
+  fi
+
   local i id url only_list line tool_id target_ids
   for ((i = 0; i < count; i++)); do
     id="$(yq e ".servers[$i].id" "$MCP_MANIFEST")"
     url="$(yq e ".servers[$i].url" "$MCP_MANIFEST")"
+
+    if ! mcp::_is_selected "$id"; then
+      log_info "not selected, skipping: $id"
+      continue
+    fi
 
     only_list=()
     while IFS= read -r line; do [[ -n "$line" ]] && only_list+=("$line"); done \

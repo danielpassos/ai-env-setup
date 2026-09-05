@@ -56,12 +56,37 @@ packages:
   # repo is plain SKILL.md files and `skills add` discovers all 25 fine.
   - source: "skydoves/compose-performance-skills"
 
-  # wondelai: Nielsen's 10 heuristics + Krug's "Don't Make Me Think" usability
-  # audit framework - severity-rated interface reviews. Only "ux-heuristics"
-  # from this repo's 62 skills. Plain SKILL.md, no path assumptions - clean
-  # fit for `skills add` on every tool.
+  # wondelai: book-distillation skills, mostly product/business/marketing
+  # (storybrand-messaging, negotiation, traction-eos...) out of scope here.
+  # Picked only the software-engineering-general ones plus the original
+  # usability pick, out of this repo's 62 skills:
+  #   - ux-heuristics: Nielsen's 10 heuristics + Krug's "Don't Make Me
+  #     Think" - severity-rated interface reviews
+  #   - clean-code / clean-architecture / refactoring-patterns: Robert
+  #     Martin's code-quality and architecture principles
+  #   - domain-driven-design: Evans' DDD - bounded contexts, aggregates,
+  #     ubiquitous language
+  #   - ddia-systems: Kleppmann's "Designing Data-Intensive Applications" -
+  #     distributed systems tradeoffs
+  #   - system-design: general system-design interview/practice patterns
+  #   - team-topologies: Skelton & Pais - team structure and interaction
+  #     modes for fast flow
+  #   - working-with-legacy-code: Feathers' techniques for safely changing
+  #     code without tests
+  #   - pragmatic-programmer: Hunt & Thomas's general craftsmanship
+  #     practices
   - source: "wondelai/skills"
-    skills: ["ux-heuristics"]
+    skills:
+      - ux-heuristics
+      - clean-code
+      - clean-architecture
+      - refactoring-patterns
+      - domain-driven-design
+      - ddia-systems
+      - system-design
+      - team-topologies
+      - working-with-legacy-code
+      - pragmatic-programmer
 
   # JuliusBrussee/caveman: 20 skills - ultra-compressed "caveman" output mode
   # (~65% fewer tokens) plus workflow skills (investigate-first, lean-build,

@@ -59,20 +59,14 @@ main() {
       tools::install "$id"
       tools::sync_links "$id"
     done
-  fi
 
-  skills::select >/dev/null
-  plugins::select >/dev/null
-  mcp::select >/dev/null
+    skills::select >/dev/null
+    plugins::select >/dev/null
+    mcp::select >/dev/null
 
-  if [[ "${#selected[@]}" -gt 0 ]]; then
     skills::sync "${selected[@]}"
     plugins::sync "${selected[@]}"
     mcp::sync "${selected[@]}"
-  else
-    skills::sync
-    plugins::sync
-    mcp::sync
   fi
 
   self_link_path

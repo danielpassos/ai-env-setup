@@ -25,14 +25,21 @@ skills::_read_list() {
 skills::_uninstall() {
   local source="$1"
 
-  local list_json
-  list_json="$(npx --yes skills list -g --json 2>/dev/null)"
+  # Written to a real file rather than captured via $(...): piping a large
+  # `skills list` straight into command substitution truncates it at
+  # exactly 64KB (macOS's default pipe buffer size) - a Node process_exit
+  # flushing bug in the `skills` CLI, not something to work around with a
+  # bigger buffer.
+  local list_file
+  list_file="$(mktemp)"
+  npx --yes skills list -g --json >"$list_file" 2>/dev/null
 
   local names=() line
   while IFS= read -r line; do
     [[ -n "$line" ]] && names+=("$line")
-  done < <(yq e ".[] | select(.source == \"$source\") | .name" -p=json \
-    <(printf '%s' "$list_json") 2>/dev/null)
+  done < <(yq e ".[] | select(.source == \"$source\") | .name" -p=json "$list_file" 2>/dev/null)
+
+  rm -f "$list_file"
 
   if [[ "${#names[@]}" -eq 0 ]]; then
     log_info "$source: nothing installed to remove"

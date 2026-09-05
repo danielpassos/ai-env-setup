@@ -42,6 +42,12 @@ To skip the interactive prompt (e.g. in a script), set
 `AI_ENV_SETUP_TOOLS=codex,cursor ai-env-setup` (comma-separated ids from
 `manifest/tools.yaml`).
 
+To select everything instead of picking, set `AI_ENV_SETUP_ALL=1` - it
+bypasses every interactive picker (currently just tools; skills/plugins/mcp
+pickers are on the way) and selects all available options without needing
+`gum` installed. `AI_ENV_SETUP_TOOLS` still wins over it for tools if both
+are set.
+
 ## Layout
 
 ```

@@ -70,13 +70,16 @@ picker::_previous_selection() {
 # STATE_FILE as next run's default hint. Shared by every interactive
 # multi-select in this repo (tools, and later skills/plugins/mcp).
 #
+# Respects AI_ENV_SETUP_ALL as a non-interactive override: when set,
+# everything is selected without prompting (or requiring gum at all) -
+# consistent across every category, unlike a per-category flag/env var.
+#
 # The previous selection is shown as a text hint in the header rather than
 # pre-ticked via gum's --selected: in gum 2.0.0 an item preselected but left
 # untouched by the user silently drops out of the final output instead of
 # being returned, corrupting the result.
 picker::select() {
   local state_file="$1" prompt="$2"
-  require_cmd gum
 
   local all_options=() all_ids=() line id
   while IFS= read -r line; do
@@ -89,6 +92,15 @@ picker::select() {
     log_warn "nothing to choose from"
     return 0
   fi
+
+  if [[ -n "${AI_ENV_SETUP_ALL:-}" ]]; then
+    log_info "AI_ENV_SETUP_ALL set: selecting everything ($prompt)"
+    picker::_save_selection "$state_file" "${all_ids[@]}"
+    printf '%s\n' "${all_ids[@]}"
+    return 0
+  fi
+
+  require_cmd gum
 
   local previous=() previous_labels=()
   while IFS= read -r line; do previous+=("$line"); done < <(picker::_previous_selection "$state_file")

@@ -61,6 +61,8 @@ main() {
     done
   fi
 
+  skills::select >/dev/null
+
   if [[ "${#selected[@]}" -gt 0 ]]; then
     skills::sync "${selected[@]}"
     plugins::sync "${selected[@]}"

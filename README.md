@@ -42,11 +42,15 @@ To skip the interactive prompt (e.g. in a script), set
 `AI_ENV_SETUP_TOOLS=codex,cursor ai-env-setup` (comma-separated ids from
 `manifest/tools.yaml`).
 
+Besides tools, `ai-env-setup` also asks which skill packages
+(`manifest/skills.yaml`), Claude Code plugins (`manifest/plugins.yaml`), and
+MCP servers (`manifest/mcp.yaml`) to install/configure - each remembers your
+last pick as next run's default the same way the tools picker does.
+
 To select everything instead of picking, set `AI_ENV_SETUP_ALL=1` - it
-bypasses every interactive picker (currently just tools; skills/plugins/mcp
-pickers are on the way) and selects all available options without needing
-`gum` installed. `AI_ENV_SETUP_TOOLS` still wins over it for tools if both
-are set.
+bypasses every interactive picker (tools, skills, plugins, MCP) and selects
+all available options without needing `gum` installed. `AI_ENV_SETUP_TOOLS`
+still wins over it for tools if both are set.
 
 ## Layout
 

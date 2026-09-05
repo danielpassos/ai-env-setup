@@ -47,3 +47,11 @@ packages:
   - marketplace_source: "thedotmack/claude-mem"
     marketplace: "thedotmack"
     plugin: "claude-mem"
+
+  # Generates standalone HTML pages for diagrams, diff reviews, plan
+  # reviews, slides, and data tables - a lighter-weight visual output path
+  # than the artifact-publishing flow this repo doesn't otherwise touch.
+  # https://github.com/nicobailon/visual-explainer
+  - marketplace_source: "nicobailon/visual-explainer"
+    marketplace: "visual-explainer-marketplace"
+    plugin: "visual-explainer"

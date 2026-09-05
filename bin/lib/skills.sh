@@ -56,11 +56,11 @@ skills::_uninstall() {
 
 # skills::select -> prints the chosen package sources, one per line, and
 # persists them to SKILLS_STATE_FILE as next run's default (same mechanics
-# as tools::select, via the shared picker::select helper). Labels and ids
-# are both the package's `source` since packages have no separate display
-# name - fine for the "owner/repo" sources every package uses today, but a
-# `source` given as a full URL (colons in the scheme) would confuse
-# picker::select's ":"-delimited parsing.
+# as tools::select, via the shared picker::select helper). The picker label
+# is "name — description" (falling back to the bare `source` when a
+# package doesn't declare `name`/`description`) - the id underneath is
+# always `source`, so a `source` given as a full URL (colons in the scheme)
+# would still confuse picker::select's ":"-delimited parsing.
 #
 # Also uninstalls (skills::_uninstall) any package that was selected last
 # run but isn't anymore - including one removed from the manifest entirely,
@@ -80,10 +80,18 @@ skills::select() {
     return 0
   fi
 
-  local i source all_options=()
+  local i source name description label all_options=()
   for ((i = 0; i < count; i++)); do
     source="$(yq e ".packages[$i].source" "$SKILLS_MANIFEST")"
-    all_options+=("$source:$source")
+
+    name="$(yq e ".packages[$i].name" "$SKILLS_MANIFEST")"
+    [[ "$name" == "null" ]] && name="$source"
+
+    description="$(yq e ".packages[$i].description" "$SKILLS_MANIFEST")"
+    label="$name"
+    [[ "$description" != "null" ]] && label="$name — $description"
+
+    all_options+=("$label:$source")
   done
 
   local previous=() line
@@ -95,15 +103,28 @@ skills::select() {
     < <(picker::select "$SKILLS_STATE_FILE" "Which skill packages should ai-env-setup install?" \
       < <(printf '%s\n' "${all_options[@]}"))
 
+  # bash 3.2's `set -u` throws "unbound variable" on "${arr[@]}" for a
+  # zero-length array even when properly declared via arr=() - so every
+  # array that might be empty here is guarded before expansion (see
+  # AGENTS.md). removed_args always has at least the literal "--", so it's
+  # always safe to expand.
+  local removed_args=()
+  [[ "${#chosen[@]}" -gt 0 ]] && removed_args+=("${chosen[@]}")
+  removed_args+=("--")
+  [[ "${#previous[@]}" -gt 0 ]] && removed_args+=("${previous[@]}")
+
   local removed=()
   while IFS= read -r line; do [[ -n "$line" ]] && removed+=("$line"); done \
-    < <(picker::_removed "${chosen[@]}" -- "${previous[@]}")
+    < <(picker::_removed "${removed_args[@]}")
 
-  for source in "${removed[@]}"; do
-    skills::_uninstall "$source"
-  done
+  if [[ "${#removed[@]}" -gt 0 ]]; then
+    for source in "${removed[@]}"; do
+      skills::_uninstall "$source"
+    done
+  fi
 
-  printf '%s\n' "${chosen[@]}"
+  [[ "${#chosen[@]}" -gt 0 ]] && printf '%s\n' "${chosen[@]}"
+  return 0
 }
 
 skills::_is_selected() {

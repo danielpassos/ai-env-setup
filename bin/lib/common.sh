@@ -55,7 +55,14 @@ picker::_save_selection() {
   local state_file="$1"
   shift
   mkdir -p "$(dirname "$state_file")"
-  printf '%s\n' "$@" >"$state_file"
+  # printf with zero args still runs its format string once, writing a
+  # stray blank line for an empty selection - truncate instead when there's
+  # nothing to write.
+  if [[ "$#" -eq 0 ]]; then
+    : >"$state_file"
+  else
+    printf '%s\n' "$@" >"$state_file"
+  fi
 }
 
 # picker::_previous_selection STATE_FILE -> previously saved ids, one per line
@@ -86,12 +93,16 @@ picker::_removed() {
     fi
   done
 
+  [[ "${#old_ids[@]}" -eq 0 ]] && return 0
+
   local old_id new_id kept
   for old_id in "${old_ids[@]}"; do
     kept=0
-    for new_id in "${new_ids[@]}"; do
-      [[ "$new_id" == "$old_id" ]] && kept=1 && break
-    done
+    if [[ "${#new_ids[@]}" -gt 0 ]]; then
+      for new_id in "${new_ids[@]}"; do
+        [[ "$new_id" == "$old_id" ]] && kept=1 && break
+      done
+    fi
     [[ "$kept" -eq 0 ]] && printf '%s\n' "$old_id"
   done
 }

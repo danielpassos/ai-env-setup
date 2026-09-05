@@ -84,7 +84,9 @@ mcp::_uninstall() {
 
 # mcp::select -> prints the chosen server ids, one per line, and persists
 # them to MCP_STATE_FILE as next run's default (same mechanics as
-# tools::select/skills::select/plugins::select, via picker::select).
+# tools::select/skills::select/plugins::select, via picker::select). The
+# picker label is "id — description" when a server declares `description`
+# (ids here are already short/friendly, so there's no separate `name`).
 #
 # Also uninstalls (mcp::_uninstall) any server that was selected last run
 # but isn't anymore - including one removed from the manifest entirely,
@@ -104,10 +106,15 @@ mcp::select() {
     return 0
   fi
 
-  local i id all_options=()
+  local i id description label all_options=()
   for ((i = 0; i < count; i++)); do
     id="$(yq e ".servers[$i].id" "$MCP_MANIFEST")"
-    all_options+=("$id:$id")
+
+    description="$(yq e ".servers[$i].description" "$MCP_MANIFEST")"
+    label="$id"
+    [[ "$description" != "null" ]] && label="$id — $description"
+
+    all_options+=("$label:$id")
   done
 
   local previous=() line
@@ -119,15 +126,28 @@ mcp::select() {
     < <(picker::select "$MCP_STATE_FILE" "Which MCP servers should ai-env-setup configure?" \
       < <(printf '%s\n' "${all_options[@]}"))
 
+  # bash 3.2's `set -u` throws "unbound variable" on "${arr[@]}" for a
+  # zero-length array even when properly declared via arr=() - so every
+  # array that might be empty here is guarded before expansion (see
+  # AGENTS.md). removed_args always has at least the literal "--", so it's
+  # always safe to expand.
+  local removed_args=()
+  [[ "${#chosen[@]}" -gt 0 ]] && removed_args+=("${chosen[@]}")
+  removed_args+=("--")
+  [[ "${#previous[@]}" -gt 0 ]] && removed_args+=("${previous[@]}")
+
   local removed=()
   while IFS= read -r line; do [[ -n "$line" ]] && removed+=("$line"); done \
-    < <(picker::_removed "${chosen[@]}" -- "${previous[@]}")
+    < <(picker::_removed "${removed_args[@]}")
 
-  for id in "${removed[@]}"; do
-    mcp::_uninstall "$id"
-  done
+  if [[ "${#removed[@]}" -gt 0 ]]; then
+    for id in "${removed[@]}"; do
+      mcp::_uninstall "$id"
+    done
+  fi
 
-  printf '%s\n' "${chosen[@]}"
+  [[ "${#chosen[@]}" -gt 0 ]] && printf '%s\n' "${chosen[@]}"
+  return 0
 }
 
 mcp::_is_selected() {

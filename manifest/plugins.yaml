@@ -13,6 +13,12 @@
 #   file rather than guessed, since it doesn't have to match the repo name.
 # packages[].plugin: the plugin name to install, from the marketplace's
 #   `plugins[].name` - passed as `claude plugin install <plugin>@<marketplace>`.
+# packages[].name: optional - short friendly label shown in the picker.
+#   Falls back to the bare `plugin` name when omitted (already fairly
+#   readable for most of these, unlike manifest/skills.yaml's raw
+#   "owner/repo" sources).
+# packages[].description: optional - one-line description shown next to
+#   `name` in the picker.
 
 packages:
   # Behavioral guidelines distilled from Andrej Karpathy's observations on
@@ -21,6 +27,8 @@ packages:
   - marketplace_source: "multica-ai/andrej-karpathy-skills"
     marketplace: "karpathy-skills"
     plugin: "andrej-karpathy-skills"
+    name: "Karpathy Guidelines"
+    description: "Behavioral guidelines from Andrej Karpathy's LLM coding observations"
 
   # Anthropic's own plugin: analyzes a codebase and recommends tailored
   # Claude Code automations (hooks, skills, MCP servers, subagents, slash
@@ -29,6 +37,8 @@ packages:
   - marketplace_source: "anthropics/claude-plugins-official"
     marketplace: "claude-plugins-official"
     plugin: "claude-code-setup"
+    name: "Automation Recommender"
+    description: "Analyzes your codebase and suggests Claude Code automations (read-only)"
 
   # Browser automation and end-to-end testing MCP server by Microsoft -
   # lets Claude interact with web pages, take screenshots, fill forms,
@@ -37,6 +47,7 @@ packages:
   - marketplace_source: "anthropics/claude-plugins-official"
     marketplace: "claude-plugins-official"
     plugin: "playwright"
+    description: "Browser automation and E2E testing MCP server by Microsoft"
 
   # Persistent memory across sessions: captures what happened during a
   # session, compresses it, and injects relevant context back into future
@@ -47,6 +58,7 @@ packages:
   - marketplace_source: "thedotmack/claude-mem"
     marketplace: "thedotmack"
     plugin: "claude-mem"
+    description: "Persistent memory/context compression across sessions"
 
   # Generates standalone HTML pages for diagrams, diff reviews, plan
   # reviews, slides, and data tables - a lighter-weight visual output path
@@ -55,3 +67,4 @@ packages:
   - marketplace_source: "nicobailon/visual-explainer"
     marketplace: "visual-explainer-marketplace"
     plugin: "visual-explainer"
+    description: "Generates HTML pages for diagrams, diff/plan reviews, and slides"

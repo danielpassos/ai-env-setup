@@ -33,10 +33,13 @@ plugins::_uninstall() {
 
 # plugins::select -> prints the chosen "plugin@marketplace" ids, one per
 # line, and persists them to PLUGINS_STATE_FILE as next run's default (same
-# mechanics as tools::select/skills::select, via picker::select). Uses
-# "plugin@marketplace" rather than the bare plugin name since that's this
-# repo's own uniqueness key for a package (matches what `claude plugin
-# install` takes), in case two marketplaces ever ship a same-named plugin.
+# mechanics as tools::select/skills::select, via picker::select). The id
+# underneath is always "plugin@marketplace" rather than the bare plugin
+# name since that's this repo's own uniqueness key for a package (matches
+# what `claude plugin install` takes), in case two marketplaces ever ship a
+# same-named plugin - the picker label is "name — description" instead
+# (falling back to the bare plugin name when a package doesn't declare
+# `name`/`description`).
 #
 # Also uninstalls (plugins::_uninstall) any plugin that was selected last
 # run but isn't anymore - including one removed from the manifest entirely,
@@ -56,12 +59,20 @@ plugins::select() {
     return 0
   fi
 
-  local i marketplace plugin id all_options=()
+  local i marketplace plugin id name description label all_options=()
   for ((i = 0; i < count; i++)); do
     marketplace="$(yq e ".packages[$i].marketplace" "$PLUGINS_MANIFEST")"
     plugin="$(yq e ".packages[$i].plugin" "$PLUGINS_MANIFEST")"
     id="$plugin@$marketplace"
-    all_options+=("$id:$id")
+
+    name="$(yq e ".packages[$i].name" "$PLUGINS_MANIFEST")"
+    [[ "$name" == "null" ]] && name="$plugin"
+
+    description="$(yq e ".packages[$i].description" "$PLUGINS_MANIFEST")"
+    label="$name"
+    [[ "$description" != "null" ]] && label="$name — $description"
+
+    all_options+=("$label:$id")
   done
 
   local previous=() line
@@ -73,15 +84,28 @@ plugins::select() {
     < <(picker::select "$PLUGINS_STATE_FILE" "Which Claude Code plugins should ai-env-setup install?" \
       < <(printf '%s\n' "${all_options[@]}"))
 
+  # bash 3.2's `set -u` throws "unbound variable" on "${arr[@]}" for a
+  # zero-length array even when properly declared via arr=() - so every
+  # array that might be empty here is guarded before expansion (see
+  # AGENTS.md). removed_args always has at least the literal "--", so it's
+  # always safe to expand.
+  local removed_args=()
+  [[ "${#chosen[@]}" -gt 0 ]] && removed_args+=("${chosen[@]}")
+  removed_args+=("--")
+  [[ "${#previous[@]}" -gt 0 ]] && removed_args+=("${previous[@]}")
+
   local removed=()
   while IFS= read -r line; do [[ -n "$line" ]] && removed+=("$line"); done \
-    < <(picker::_removed "${chosen[@]}" -- "${previous[@]}")
+    < <(picker::_removed "${removed_args[@]}")
 
-  for id in "${removed[@]}"; do
-    plugins::_uninstall "$id"
-  done
+  if [[ "${#removed[@]}" -gt 0 ]]; then
+    for id in "${removed[@]}"; do
+      plugins::_uninstall "$id"
+    done
+  fi
 
-  printf '%s\n' "${chosen[@]}"
+  [[ "${#chosen[@]}" -gt 0 ]] && printf '%s\n' "${chosen[@]}"
+  return 0
 }
 
 plugins::_is_selected() {

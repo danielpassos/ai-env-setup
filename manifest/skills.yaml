@@ -6,6 +6,12 @@
 # published skill package wholesale.
 #
 # packages[].source: a GitHub owner/repo (or full URL), same as `skills add <package>`
+# packages[].name: optional - short friendly label shown in the picker
+#   instead of the raw `source` (which is easy to forget the point of
+#   months later, e.g. "skydoves/compose-performance-skills"). Falls back
+#   to `source` when omitted.
+# packages[].description: optional - one-line description shown next to
+#   `name` in the picker.
 # packages[].skills: optional - only install these skill names from the
 #   package (omit to install everything it offers)
 # packages[].only: optional - only install for these tool ids, using this
@@ -26,27 +32,37 @@ packages:
   # is a different repo from vercel-labs/agent-skills (which has no
   # find-skills of its own).
   - source: "vercel-labs/skills"
+    name: "Find Skills"
+    description: "Search and install other skills via the `skills` CLI"
     skills: ["find-skills"]
 
   # Only "wayfinder" - breaks work too large for one agent session into a
   # shared map of decision tickets on the issue tracker, resolved one at a
   # time. The rest of this repo's 36 skills weren't picked.
   - source: "mattpocock/skills"
+    name: "Wayfinder"
+    description: "Break large work into a shared map of tracked tickets"
     skills: ["wayfinder"]
 
   # Rewrites AI-sounding prose (stock phrasing, filler, passive voice, etc.)
   # to read naturally without changing what it says.
   - source: "blader/humanizer"
+    name: "Humanizer"
+    description: "Rewrite AI-sounding prose to read naturally"
 
   # Material Design 3 (Material You): components, design tokens, theming,
   # responsive layout, and MD3 compliance audits. Primarily Jetpack Compose
   # Material3, also Flutter and (maintenance-mode) web.
   - source: "hamen/material-3-skill"
+    name: "Material 3"
+    description: "MD3 components, theming, and compliance audits (Compose/Flutter/web)"
 
   # Chris Banes (Jetpack Compose/Accompanist, Google): Compose (state/effects,
   # performance, component design, animations, testing) and Kotlin
   # (coroutines/flow, control flow, API design) plus Gradle workflows.
   - source: "chrisbanes/skills"
+    name: "Compose + Kotlin (Chris Banes)"
+    description: "Compose state/performance/testing and Kotlin coroutines/API design"
 
   # skydoves: 25 skills focused specifically on Jetpack Compose performance -
   # recomposition, stability inference, LazyColumn/prefetch tuning,
@@ -55,6 +71,8 @@ packages:
   # duplicating it. README documents a manual git-clone install, but the
   # repo is plain SKILL.md files and `skills add` discovers all 25 fine.
   - source: "skydoves/compose-performance-skills"
+    name: "Compose Performance"
+    description: "Jetpack Compose recomposition, stability, and prefetch tuning"
 
   # wondelai: book-distillation skills, mostly product/business/marketing
   # (storybrand-messaging, negotiation, traction-eos...) out of scope here.
@@ -76,6 +94,8 @@ packages:
   #   - pragmatic-programmer: Hunt & Thomas's general craftsmanship
   #     practices
   - source: "wondelai/skills"
+    name: "Software Design + UX"
+    description: "Clean code/architecture, DDD, system design, usability heuristics"
     skills:
       - ux-heuristics
       - clean-code
@@ -97,3 +117,5 @@ packages:
   # This `skills add` install is the repo's own documented lightweight path
   # (vs. its separate `@caveman-ai/cli` full installer with hooks/statusline).
   - source: "JuliusBrussee/caveman"
+    name: "Caveman"
+    description: "Ultra-compressed output mode plus workflow/subagent-delegation skills"

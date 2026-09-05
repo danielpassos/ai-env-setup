@@ -5,6 +5,10 @@
 # servers[].id: stable id, used as both the manifest key and the server
 #   name registered with each tool.
 # servers[].url: the server's remote HTTP endpoint.
+# servers[].description: optional - one-line description shown next to the
+#   id in the picker (ids here are already short/friendly, unlike
+#   manifest/skills.yaml's raw sources, so there's no separate `name`
+#   field - just this).
 # servers[].only: optional - only configure for these tool ids (this repo's
 #   ids from manifest/tools.yaml), regardless of which tools were selected
 #   this run. Omit (the normal case) to configure for whichever tools you
@@ -24,6 +28,7 @@ servers:
   # https://github.com/makenotion/notion-mcp-server
   - id: notion
     url: "https://mcp.notion.com/mcp"
+    description: "Search/read/create/update Notion pages and databases"
 
   # Confluence + Jira + Jira Service Management + Bitbucket + Compass, scoped
   # to whatever the signed-in Atlassian account can already access. Atlassian
@@ -32,6 +37,7 @@ servers:
   # https://github.com/atlassian/atlassian-mcp-server
   - id: atlassian
     url: "https://mcp.atlassian.com/v1/mcp"
+    description: "Confluence + Jira + Bitbucket, scoped to your signed-in account"
 
   # Query/manage Supabase projects - tables, migrations, edge functions,
   # logs. Unscoped (no project_ref), so it covers whichever project you
@@ -39,3 +45,4 @@ servers:
   # https://supabase.com/docs/guides/getting-started/mcp
   - id: supabase
     url: "https://mcp.supabase.com/mcp"
+    description: "Query/manage Supabase projects - tables, migrations, edge functions, logs"

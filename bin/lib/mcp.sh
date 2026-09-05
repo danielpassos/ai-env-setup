@@ -19,9 +19,76 @@ mcp::_read_list() {
   yq e ".servers[$index].${field} // [] | .[]" "$MCP_MANIFEST" 2>/dev/null
 }
 
+# mcp::_uninstall_claude/_codex/_cursor ID - each tolerates the server
+# never having been configured there (not just "CLI missing"): a deselected
+# server was likely only ever synced to some of the three, and re-removing
+# an absent one must stay a quiet no-op, not a warning.
+mcp::_uninstall_claude() {
+  local id="$1"
+  command -v claude >/dev/null 2>&1 || return 0
+
+  local out status=0
+  out="$(claude mcp remove "$id" 2>&1)" || status=$?
+
+  if [[ "$status" -eq 0 ]]; then
+    log_success "claude: removed MCP server $id"
+  elif grep -qi "no mcp server named" <<<"$out"; then
+    : # never configured there, nothing to do
+  else
+    printf '%s\n' "$out" >&2
+    log_warn "claude: failed to remove MCP server $id (see output above)"
+  fi
+}
+
+mcp::_uninstall_codex() {
+  local id="$1"
+  command -v codex >/dev/null 2>&1 || return 0
+
+  local out status=0
+  out="$(codex mcp remove "$id" 2>&1)" || status=$?
+
+  if [[ "$status" -ne 0 ]]; then
+    printf '%s\n' "$out" >&2
+    log_warn "codex: failed to remove MCP server $id (see output above)"
+  elif grep -qi "no mcp server named" <<<"$out"; then
+    : # never configured there, nothing to do
+  else
+    log_success "codex: removed MCP server $id"
+  fi
+}
+
+mcp::_uninstall_cursor() {
+  local id="$1"
+  local file="$HOME/.cursor/mcp.json"
+
+  [[ -f "$file" ]] || return 0
+
+  if MCP_SYNC_ID="$id" yq -i -o=json 'del(.mcpServers[strenv(MCP_SYNC_ID)])' "$file"; then
+    log_success "cursor: removed MCP server $id"
+  else
+    log_warn "cursor: failed to update $file removing MCP server $id"
+  fi
+}
+
+# mcp::_uninstall ID - removes a deselected server from all three tool
+# integrations. Unlike mcp::sync's per-server `target_ids`, this doesn't
+# know (or need to know) which tools it was actually synced to - each
+# _uninstall_* is a safe no-op wherever the server was never configured.
+mcp::_uninstall() {
+  local id="$1"
+  log_info "removing deselected MCP server: $id"
+  mcp::_uninstall_claude "$id"
+  mcp::_uninstall_codex "$id"
+  mcp::_uninstall_cursor "$id"
+}
+
 # mcp::select -> prints the chosen server ids, one per line, and persists
 # them to MCP_STATE_FILE as next run's default (same mechanics as
 # tools::select/skills::select/plugins::select, via picker::select).
+#
+# Also uninstalls (mcp::_uninstall) any server that was selected last run
+# but isn't anymore - including one removed from the manifest entirely,
+# since it can no longer appear as an option here either way.
 #
 # mcp::sync reads this same state file to know what to actually sync, so
 # this must run before it in the same invocation (see bin/setup.sh).
@@ -43,8 +110,24 @@ mcp::select() {
     all_options+=("$id:$id")
   done
 
-  picker::select "$MCP_STATE_FILE" "Which MCP servers should ai-env-setup configure?" \
-    < <(printf '%s\n' "${all_options[@]}")
+  local previous=() line
+  while IFS= read -r line; do [[ -n "$line" ]] && previous+=("$line"); done \
+    < <(picker::_previous_selection "$MCP_STATE_FILE")
+
+  local chosen=()
+  while IFS= read -r line; do chosen+=("$line"); done \
+    < <(picker::select "$MCP_STATE_FILE" "Which MCP servers should ai-env-setup configure?" \
+      < <(printf '%s\n' "${all_options[@]}"))
+
+  local removed=()
+  while IFS= read -r line; do [[ -n "$line" ]] && removed+=("$line"); done \
+    < <(picker::_removed "${chosen[@]}" -- "${previous[@]}")
+
+  for id in "${removed[@]}"; do
+    mcp::_uninstall "$id"
+  done
+
+  printf '%s\n' "${chosen[@]}"
 }
 
 mcp::_is_selected() {

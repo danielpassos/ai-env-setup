@@ -65,6 +65,37 @@ picker::_previous_selection() {
   cat "$state_file"
 }
 
+# picker::_removed NEW_ID... -- OLD_ID... -> prints, one per line, every
+# OLD_ID that isn't among NEW_ID - i.e. what a picker's caller deselected
+# this run (present in the previous selection, dropped from the new one).
+# Callers capture the previous selection (picker::_previous_selection)
+# *before* calling picker::select, since that call overwrites the state
+# file with the new one. Takes both lists as one arg list split on a
+# literal "--" since bash 3.2 has no clean way to pass two arrays in.
+picker::_removed() {
+  local new_ids=() old_ids=() target=new arg
+  for arg in "$@"; do
+    if [[ "$arg" == "--" ]]; then
+      target=old
+      continue
+    fi
+    if [[ "$target" == "new" ]]; then
+      new_ids+=("$arg")
+    else
+      old_ids+=("$arg")
+    fi
+  done
+
+  local old_id new_id kept
+  for old_id in "${old_ids[@]}"; do
+    kept=0
+    for new_id in "${new_ids[@]}"; do
+      [[ "$new_id" == "$old_id" ]] && kept=1 && break
+    done
+    [[ "$kept" -eq 0 ]] && printf '%s\n' "$old_id"
+  done
+}
+
 # picker::select STATE_FILE PROMPT < "label:id" lines (one per option) on
 # stdin -> prints the chosen ids, one per line, and persists them to
 # STATE_FILE as next run's default hint. Shared by every interactive

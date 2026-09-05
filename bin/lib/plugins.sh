@@ -11,12 +11,36 @@ PLUGINS_STATE_FILE="$HOME/.config/ai-env-setup/selected-plugins"
 
 readonly PLUGINS_MANIFEST PLUGINS_STATE_FILE
 
+# plugins::_uninstall PLUGIN@MARKETPLACE - uninstalls a plugin that was
+# deselected. `claude plugin list` addresses installed plugins the same
+# "plugin@marketplace" way, so the id doubles as the argument to uninstall.
+# Leaves the marketplace itself registered - other plugins may still use it.
+plugins::_uninstall() {
+  local id="$1"
+
+  if ! command -v claude >/dev/null 2>&1; then
+    log_warn "claude CLI not found, can't remove $id"
+    return 0
+  fi
+
+  log_info "removing deselected plugin: $id"
+  if run_quiet claude plugin uninstall "$id" -y; then
+    log_success "removed: $id"
+  else
+    log_warn "$id: failed to remove (see output above)"
+  fi
+}
+
 # plugins::select -> prints the chosen "plugin@marketplace" ids, one per
 # line, and persists them to PLUGINS_STATE_FILE as next run's default (same
 # mechanics as tools::select/skills::select, via picker::select). Uses
 # "plugin@marketplace" rather than the bare plugin name since that's this
 # repo's own uniqueness key for a package (matches what `claude plugin
 # install` takes), in case two marketplaces ever ship a same-named plugin.
+#
+# Also uninstalls (plugins::_uninstall) any plugin that was selected last
+# run but isn't anymore - including one removed from the manifest entirely,
+# since it can no longer appear as an option here either way.
 #
 # plugins::sync reads this same state file to know what to actually sync,
 # so this must run before it in the same invocation (see bin/setup.sh).
@@ -40,8 +64,24 @@ plugins::select() {
     all_options+=("$id:$id")
   done
 
-  picker::select "$PLUGINS_STATE_FILE" "Which Claude Code plugins should ai-env-setup install?" \
-    < <(printf '%s\n' "${all_options[@]}")
+  local previous=() line
+  while IFS= read -r line; do [[ -n "$line" ]] && previous+=("$line"); done \
+    < <(picker::_previous_selection "$PLUGINS_STATE_FILE")
+
+  local chosen=()
+  while IFS= read -r line; do chosen+=("$line"); done \
+    < <(picker::select "$PLUGINS_STATE_FILE" "Which Claude Code plugins should ai-env-setup install?" \
+      < <(printf '%s\n' "${all_options[@]}"))
+
+  local removed=()
+  while IFS= read -r line; do [[ -n "$line" ]] && removed+=("$line"); done \
+    < <(picker::_removed "${chosen[@]}" -- "${previous[@]}")
+
+  for id in "${removed[@]}"; do
+    plugins::_uninstall "$id"
+  done
+
+  printf '%s\n' "${chosen[@]}"
 }
 
 plugins::_is_selected() {

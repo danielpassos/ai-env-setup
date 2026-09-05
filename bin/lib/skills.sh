@@ -16,6 +16,37 @@ skills::_read_list() {
   yq e ".packages[$index].${field} // [] | .[]" "$SKILLS_MANIFEST" 2>/dev/null
 }
 
+# skills::_uninstall SOURCE - removes every currently-installed skill that
+# came from this package source, from every agent it's linked into. Looks
+# up the exact skill names via `skills list -g --json` (which records each
+# skill's origin `source`) rather than relying on the manifest's optional
+# `skills:` list, so this works even for packages that installed "whatever
+# the repo offers" without ai-env-setup ever recording individual names.
+skills::_uninstall() {
+  local source="$1"
+
+  local list_json
+  list_json="$(npx --yes skills list -g --json 2>/dev/null)"
+
+  local names=() line
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && names+=("$line")
+  done < <(yq e ".[] | select(.source == \"$source\") | .name" -p=json \
+    <(printf '%s' "$list_json") 2>/dev/null)
+
+  if [[ "${#names[@]}" -eq 0 ]]; then
+    log_info "$source: nothing installed to remove"
+    return 0
+  fi
+
+  log_info "removing deselected skill package: $source (${names[*]})"
+  if run_quiet npx --yes skills remove "${names[@]}" --global -y; then
+    log_success "removed: $source"
+  else
+    log_warn "$source: failed to remove some skills (see output above)"
+  fi
+}
+
 # skills::select -> prints the chosen package sources, one per line, and
 # persists them to SKILLS_STATE_FILE as next run's default (same mechanics
 # as tools::select, via the shared picker::select helper). Labels and ids
@@ -23,6 +54,10 @@ skills::_read_list() {
 # name - fine for the "owner/repo" sources every package uses today, but a
 # `source` given as a full URL (colons in the scheme) would confuse
 # picker::select's ":"-delimited parsing.
+#
+# Also uninstalls (skills::_uninstall) any package that was selected last
+# run but isn't anymore - including one removed from the manifest entirely,
+# since it can no longer appear as an option here either way.
 #
 # skills::sync reads this same state file to know what to actually sync, so
 # this must run before it in the same invocation (see bin/setup.sh).
@@ -44,8 +79,24 @@ skills::select() {
     all_options+=("$source:$source")
   done
 
-  picker::select "$SKILLS_STATE_FILE" "Which skill packages should ai-env-setup install?" \
-    < <(printf '%s\n' "${all_options[@]}")
+  local previous=() line
+  while IFS= read -r line; do [[ -n "$line" ]] && previous+=("$line"); done \
+    < <(picker::_previous_selection "$SKILLS_STATE_FILE")
+
+  local chosen=()
+  while IFS= read -r line; do chosen+=("$line"); done \
+    < <(picker::select "$SKILLS_STATE_FILE" "Which skill packages should ai-env-setup install?" \
+      < <(printf '%s\n' "${all_options[@]}"))
+
+  local removed=()
+  while IFS= read -r line; do [[ -n "$line" ]] && removed+=("$line"); done \
+    < <(picker::_removed "${chosen[@]}" -- "${previous[@]}")
+
+  for source in "${removed[@]}"; do
+    skills::_uninstall "$source"
+  done
+
+  printf '%s\n' "${chosen[@]}"
 }
 
 skills::_is_selected() {

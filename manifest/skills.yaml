@@ -36,13 +36,46 @@ packages:
     description: "Search and install other skills via the `skills` CLI"
     skills: ["find-skills"]
 
-  # Only "wayfinder" - breaks work too large for one agent session into a
-  # shared map of decision tickets on the issue tracker, resolved one at a
-  # time. The rest of this repo's 36 skills weren't picked.
+  # Grilling-centered picks from this repo's 36 skills, plus the two
+  # transitive deps they call via the Skill tool (not requested directly,
+  # but silently no-op/fail without them):
+  #   - grilling / grill-me: relentless-interview loop to sharpen a plan or
+  #     design before building it
+  #   - grill-with-docs: same interview, but also writes ADRs/glossary via
+  #     domain-modeling as decisions land
+  #   - triage: moves issues/PRs through a state machine of roles; calls
+  #     "grilling" + "domain-modeling" when a request needs fleshing out
+  #   - improve-codebase-architecture: scans for deepening opportunities,
+  #     then grills through whichever one you pick; calls "codebase-design"
+  #     for the module/seam/adapter vocabulary and "domain-modeling" to keep
+  #     it current
+  #   - wayfinder: breaks work too large for one agent session into a shared
+  #     map of decision tickets on the issue tracker, resolved one at a time
+  #   - domain-modeling, codebase-design: not requested standalone, but
+  #     grill-with-docs/triage/improve-codebase-architecture invoke them by
+  #     name and error if they're missing
+  #   - diagnosing-bugs: standalone bisection/hypothesis-testing discipline
+  #     for hard bugs - doesn't call any other skill, just trying it out
+  #   - code-review: two-axis review (Standards vs Spec) of a diff since a
+  #     fixed point, run as parallel sub-agents - also standalone
+  # triage and wayfinder both degrade gracefully to a local-markdown issue
+  # tracker if this repo hasn't run mattpocock/skills' own
+  # "setup-matt-pocock-skills" (not picked - that's a per-project, one-time
+  # slash command, not something this manifest installs globally).
   - source: "mattpocock/skills"
-    name: "Wayfinder"
-    description: "Break large work into a shared map of tracked tickets"
-    skills: ["wayfinder"]
+    name: "Grilling + Triage + Wayfinder"
+    description: "Relentless-interview planning, triage, and architecture review"
+    skills:
+      - grilling
+      - grill-me
+      - grill-with-docs
+      - domain-modeling
+      - code-review
+      - diagnosing-bugs
+      - codebase-design
+      - triage
+      - improve-codebase-architecture
+      - wayfinder
 
   # Rewrites AI-sounding prose (stock phrasing, filler, passive voice, etc.)
   # to read naturally without changing what it says.

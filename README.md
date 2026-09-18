@@ -74,11 +74,13 @@ priority option) never go stale. Pass `--owner <login>` and/or `--project
 Requires `gh` to be installed and authenticated with the `project` token
 scope (`gh auth refresh -s project` if it's missing).
 
-The generated text's wording lives in
-`bin/lib/templates/github-issue-rules.md` - edit that file to reword it,
-not `bin/lib/github_rules.sh`. The script only fills in `{{PLACEHOLDER}}`
-tokens (project title/URL/ID, field IDs, the option tables) computed live
-from `gh`; everything else in that file is plain, editable Markdown.
+The generated text's wording lives entirely in `bin/lib/templates/*.md`
+(`github-issue-rules.md` for the overall skeleton, `field-id-line.md` for
+each Status/Priority/Size bullet, `two-step-pattern.md` for the `gh`
+command example) - edit those files to reword output, not
+`bin/lib/github_rules.sh`. The script only fetches values live from `gh`,
+decides which optional templates apply to this board, and fills in each
+template's `{{PLACEHOLDER}}` tokens.
 
 The formatting/writing-style rules that don't depend on a board at all
 (heredoc escaping, no hard-wrapping issue bodies, the issue body shape) are

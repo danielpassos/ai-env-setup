@@ -106,17 +106,35 @@ github_rules::_field_options_table() {
   done <<<"$rows"
 }
 
+# github_rules::_render_template TEMPLATE_PATH [PLACEHOLDER VALUE]...
+# Reads TEMPLATE_PATH and replaces each {{PLACEHOLDER}} token with its
+# VALUE (values may contain embedded newlines). Every bit of fixed prose
+# this module emits lives in a bin/lib/templates/*.md file read through
+# this function - edit those files to reword output, not this script.
+github_rules::_render_template() {
+  local template_path="$1"
+  shift
+  [[ -f "$template_path" ]] || die "template missing: $template_path"
+
+  local rendered
+  rendered="$(cat "$template_path")"
+
+  local key value
+  while [[ "$#" -gt 0 ]]; do
+    key="$1" value="$2"
+    rendered="${rendered//\{\{$key\}\}/$value}"
+    shift 2
+  done
+
+  printf '%s' "$rendered"
+}
+
 # github_rules::_render_block OWNER PROJECT -> prints the full
 # board-specific markdown block (unwrapped - no marker comments; the
-# caller wraps it via github_rules::_upsert_block). The fixed prose lives
-# in bin/lib/templates/github-issue-rules.md (edit that file, not this
-# function, to reword it) - this function only computes the values that
-# vary per board and substitutes them into the template's {{PLACEHOLDER}}
-# tokens.
+# caller wraps it via github_rules::_upsert_block).
 github_rules::_render_block() {
   local owner="$1" project="$2"
-  local template_path="$AI_ENV_SETUP_HOME/bin/lib/templates/github-issue-rules.md"
-  [[ -f "$template_path" ]] || die "template missing: $template_path"
+  local templates_dir="$AI_ENV_SETUP_HOME/bin/lib/templates"
 
   local fields_json project_json project_id project_url project_title
   fields_json="$(github_rules::_fields_json "$owner" "$project")"
@@ -133,16 +151,18 @@ github_rules::_render_block() {
   size_id="$(github_rules::_field_id "$fields_json" "Size")"
 
   local field_id_lines=""
-  [[ -n "$status_id" ]] && printf -v field_id_lines '%s\n- Status field ID: `%s`' "$field_id_lines" "$status_id"
-  [[ -n "$priority_id" ]] && printf -v field_id_lines '%s\n- Priority field ID: `%s`' "$field_id_lines" "$priority_id"
-  [[ -n "$size_id" ]] && printf -v field_id_lines '%s\n- Size field ID: `%s`' "$field_id_lines" "$size_id"
-  field_id_lines="${field_id_lines#$'\n'}"
+  [[ -n "$status_id" ]] && field_id_lines+="$(github_rules::_render_template \
+    "$templates_dir/field-id-line.md" FIELD_NAME Status FIELD_ID "$status_id")"$'\n'
+  [[ -n "$priority_id" ]] && field_id_lines+="$(github_rules::_render_template \
+    "$templates_dir/field-id-line.md" FIELD_NAME Priority FIELD_ID "$priority_id")"$'\n'
+  [[ -n "$size_id" ]] && field_id_lines+="$(github_rules::_render_template \
+    "$templates_dir/field-id-line.md" FIELD_NAME Size FIELD_ID "$size_id")"$'\n'
+  field_id_lines="${field_id_lines%$'\n'}"
 
   local two_step_section=""
   if [[ -n "$status_id" ]]; then
-    printf -v two_step_section \
-      '**Two-step pattern** (re-verify option IDs via `gh project\nfield-list %s --owner %s --format json` if the board structure\nchanges):\n\n```bash\n# Step 1: create the issue\ngh issue create --title "..." --body "..."  # -> returns the issue URL\n\n# Step 2: add to the board + assign column\nITEM_ID=$(gh project item-add %s --owner %s \\\n  --url <issue-url-from-step-1> --format json | jq -r .id)\ngh project item-edit \\\n  --project-id %s \\\n  --field-id %s \\\n  --id "$ITEM_ID" \\\n  --single-select-option-id <column-option-id>\n```' \
-      "$project" "$owner" "$project" "$owner" "$project_id" "$status_id"
+    two_step_section="$(github_rules::_render_template "$templates_dir/two-step-pattern.md" \
+      PROJECT_NUMBER "$project" OWNER "$owner" PROJECT_ID "$project_id" STATUS_FIELD_ID "$status_id")"
   fi
 
   local option_tables="" table
@@ -159,18 +179,16 @@ github_rules::_render_block() {
     [[ -n "$table" ]] && option_tables+="$table"$'\n\n'
   fi
 
-  local rendered
-  rendered="$(cat "$template_path")"
-  rendered="${rendered//\{\{PROJECT_TITLE\}\}/$project_title}"
-  rendered="${rendered//\{\{PROJECT_URL\}\}/$project_url}"
-  rendered="${rendered//\{\{PROJECT_NUMBER\}\}/$project}"
-  rendered="${rendered//\{\{OWNER\}\}/$owner}"
-  rendered="${rendered//\{\{PROJECT_ID\}\}/$project_id}"
-  rendered="${rendered//\{\{FIELD_ID_LINES\}\}/$field_id_lines}"
-  rendered="${rendered//\{\{TWO_STEP_SECTION\}\}/$two_step_section}"
-  rendered="${rendered//\{\{OPTION_TABLES\}\}/$option_tables}"
-
-  printf '%s\n' "$rendered"
+  github_rules::_render_template "$templates_dir/github-issue-rules.md" \
+    PROJECT_TITLE "$project_title" \
+    PROJECT_URL "$project_url" \
+    PROJECT_NUMBER "$project" \
+    OWNER "$owner" \
+    PROJECT_ID "$project_id" \
+    FIELD_ID_LINES "$field_id_lines" \
+    TWO_STEP_SECTION "$two_step_section" \
+    OPTION_TABLES "$option_tables"
+  printf '\n'
 }
 
 # github_rules::_upsert_block FILE BLOCK

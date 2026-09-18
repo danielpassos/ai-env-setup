@@ -85,6 +85,11 @@ main() {
       github_rules::run "$@"
       exit $?
       ;;
+    "")
+      ;; # no command given - fall through to the normal setup flow below
+    *)
+      die "unknown command: $1 (see 'ai-env-setup --help')"
+      ;;
   esac
 
   ensure_macos

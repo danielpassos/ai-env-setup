@@ -52,6 +52,33 @@ bypasses every interactive picker (tools, skills, plugins, MCP) and selects
 all available options without needing `gum` installed. `AI_ENV_SETUP_TOOLS`
 still wins over it for tools if both are set.
 
+## Adding board-specific GitHub issue rules to a project
+
+`ai-env-setup add-github-issue-rules` is different from the rest of this
+tool: it's scoped to a single target project, not this machine. Run it from
+inside that project's own repo:
+
+```sh
+ai-env-setup add-github-issue-rules
+```
+
+It resolves the repo's GitHub owner via `gh repo view`, lists that owner's
+GitHub Projects (v2) boards and asks which one this repo uses, fetches that
+board's real Status/Priority/Size field and option IDs via `gh project
+field-list`, and writes/refreshes a marked block in that project's own
+`AGENTS.md` - never in this repo. Re-running it re-fetches live and
+replaces only that marked block, so board changes (a renamed column, a new
+priority option) never go stale. Pass `--owner <login>` and/or `--project
+<number>` to skip the auto-detection/picker, e.g. for scripting.
+
+Requires `gh` to be installed and authenticated with the `project` token
+scope (`gh auth refresh -s project` if it's missing).
+
+The formatting/writing-style rules that don't depend on a board at all
+(heredoc escaping, no hard-wrapping issue bodies, the issue body shape) are
+not part of this - they're already universal, and live in
+`rules/github-issue-style.md` like every other file in `rules/`.
+
 ## Layout
 
 ```

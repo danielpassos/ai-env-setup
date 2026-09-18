@@ -25,6 +25,8 @@ source "$script_dir/lib/skills.sh"
 source "$script_dir/lib/plugins.sh"
 # shellcheck source=lib/mcp.sh
 source "$script_dir/lib/mcp.sh"
+# shellcheck source=lib/github_rules.sh
+source "$script_dir/lib/github_rules.sh"
 
 self_link_path() {
   local bin_dir="$HOME/.local/bin"
@@ -40,6 +42,12 @@ self_link_path() {
 }
 
 main() {
+  if [[ "${1:-}" == "add-github-issue-rules" ]]; then
+    shift
+    github_rules::run "$@"
+    exit $?
+  fi
+
   ensure_macos
 
   log_info "ai-env-setup running from $AI_ENV_SETUP_HOME"

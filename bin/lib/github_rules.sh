@@ -275,4 +275,30 @@ github_rules::run() {
 
   block="$(github_rules::_render_block "$owner" "$project")"
   github_rules::_upsert_block "$(pwd)/AGENTS.md" "$block"
+  github_rules::_ensure_claude_import
+}
+
+# github_rules::_ensure_claude_import
+# Claude Code reads ./CLAUDE.md, not ./AGENTS.md - without an import, it
+# would never see the block github_rules::run just wrote. Creates
+# ./CLAUDE.md with an `@AGENTS.md` import if it doesn't exist yet (same
+# convention this repo's own root CLAUDE.md uses). If CLAUDE.md already
+# exists, never overwrites it - only warns when it doesn't already import
+# AGENTS.md, since Claude Code won't see the rules until it does.
+github_rules::_ensure_claude_import() {
+  local claude_md="$(pwd)/CLAUDE.md"
+
+  if [[ ! -e "$claude_md" ]]; then
+    printf '@AGENTS.md\n' >"$claude_md"
+    log_success "created: $claude_md (imports AGENTS.md, so Claude Code reads it too)"
+    return 0
+  fi
+
+  if grep -qF '@AGENTS.md' "$claude_md" 2>/dev/null \
+    || [[ -L "$claude_md" && "$(readlink "$claude_md")" == *AGENTS.md ]]; then
+    log_success "up to date: $claude_md already imports AGENTS.md"
+    return 0
+  fi
+
+  log_warn "$claude_md exists but doesn't import AGENTS.md - Claude Code won't see the rules just written unless you add '@AGENTS.md' to it"
 }

@@ -71,6 +71,13 @@ replaces only that marked block, so board changes (a renamed column, a new
 priority option) never go stale. Pass `--owner <login>` and/or `--project
 <number>` to skip the auto-detection/picker, e.g. for scripting.
 
+Since Claude Code reads `CLAUDE.md`, not `AGENTS.md`, it also creates a
+`CLAUDE.md` with an `@AGENTS.md` import if the target project doesn't have
+one yet - otherwise the rules it just wrote would be invisible to Claude
+Code. An existing `CLAUDE.md` is never overwritten; if it doesn't already
+import `AGENTS.md`, you'll get a warning instead so you can add the import
+yourself.
+
 Requires `gh` to be installed and authenticated with the `project` token
 scope (`gh auth refresh -s project` if it's missing).
 

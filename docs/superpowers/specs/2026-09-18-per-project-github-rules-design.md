@@ -37,13 +37,21 @@ mechanism.
 **Explicitly out of scope:**
 - Any change to how boards are structured on GitHub itself (creating
   columns/fields) - this only reads.
-- Creating a `CLAUDE.md` that imports `AGENTS.md` in the target project if
-  one doesn't already exist - that's a separate, existing concern for that
-  project, not something this subcommand should opinionatedly set up.
-  `add-github-issue-rules` only ever touches `AGENTS.md`.
 - Supporting non-`gh`-shaped project trackers (Linear, Jira, etc.) - `gh
   project` (GitHub Projects v2) only.
 - Cursor - still deferred from the prior design, unrelated to this one.
+
+**Revised after initial implementation:** the first version of this design
+excluded creating `CLAUDE.md` in the target project, reasoning that was "a
+separate, existing concern for that project." That was wrong in practice -
+Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so a target project with no
+`CLAUDE.md` (or one that doesn't import `AGENTS.md`) would never actually
+see the rules this subcommand writes. `github_rules::run` now also calls
+`github_rules::_ensure_claude_import`: creates `./CLAUDE.md` with an
+`@AGENTS.md` import if it doesn't exist yet (same convention this repo's
+own root `CLAUDE.md` uses); if `CLAUDE.md` already exists, it's never
+overwritten - only a warning is logged when it doesn't already import
+`AGENTS.md`.
 
 ## Design
 

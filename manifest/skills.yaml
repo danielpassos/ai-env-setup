@@ -36,46 +36,85 @@ packages:
     description: "Search and install other skills via the `skills` CLI"
     skills: ["find-skills"]
 
-  # Grilling-centered picks from this repo's 36 skills, plus the two
-  # transitive deps they call via the Skill tool (not requested directly,
-  # but silently no-op/fail without them):
-  #   - grilling / grill-me: relentless-interview loop to sharpen a plan or
-  #     design before building it
-  #   - grill-with-docs: same interview, but also writes ADRs/glossary via
-  #     domain-modeling as decisions land
+  # Debugging, code review, and idea->plan are deliberately NOT picked here
+  # even though mattpocock/skills has diagnosing-bugs/code-review/wayfinder
+  # for them - obra/superpowers below covers those jobs instead, and running
+  # both playbooks for the same trigger just makes which one fires
+  # unpredictable. What's left:
   #   - triage: moves issues/PRs through a state machine of roles; calls
-  #     "grilling" + "domain-modeling" when a request needs fleshing out
+  #     "grilling" + "domain-modeling" when a request needs fleshing out -
+  #     no superpowers equivalent, so kept despite the dependency below
   #   - improve-codebase-architecture: scans for deepening opportunities,
   #     then grills through whichever one you pick; calls "codebase-design"
   #     for the module/seam/adapter vocabulary and "domain-modeling" to keep
-  #     it current
-  #   - wayfinder: breaks work too large for one agent session into a shared
-  #     map of decision tickets on the issue tracker, resolved one at a time
-  #   - domain-modeling, codebase-design: not requested standalone, but
-  #     grill-with-docs/triage/improve-codebase-architecture invoke them by
-  #     name and error if they're missing
-  #   - diagnosing-bugs: standalone bisection/hypothesis-testing discipline
-  #     for hard bugs - doesn't call any other skill, just trying it out
-  #   - code-review: two-axis review (Standards vs Spec) of a diff since a
-  #     fixed point, run as parallel sub-agents - also standalone
-  # triage and wayfinder both degrade gracefully to a local-markdown issue
-  # tracker if this repo hasn't run mattpocock/skills' own
-  # "setup-matt-pocock-skills" (not picked - that's a per-project, one-time
-  # slash command, not something this manifest installs globally).
+  #     it current - also no superpowers equivalent
+  #   - grilling, domain-modeling, codebase-design: not wanted standalone,
+  #     but triage/improve-codebase-architecture invoke them by name and
+  #     error if they're missing. Accepted trade-off: grilling stays
+  #     installed and can still auto-trigger on its own "stress-test this
+  #     idea" description, so it may occasionally compete with
+  #     superpowers' brainstorming for a plain planning request.
+  # triage degrades gracefully to a local-markdown issue tracker if this
+  # repo hasn't run mattpocock/skills' own "setup-matt-pocock-skills" (not
+  # picked - that's a per-project, one-time slash command, not something
+  # this manifest installs globally).
   - source: "mattpocock/skills"
-    name: "Grilling + Triage + Wayfinder"
-    description: "Relentless-interview planning, triage, and architecture review"
+    name: "Triage + Architecture Review"
+    description: "Issue triage and architecture-deepening review (grilling as backing dependency)"
     skills:
       - grilling
-      - grill-me
-      - grill-with-docs
       - domain-modeling
-      - code-review
-      - diagnosing-bugs
       - codebase-design
       - triage
       - improve-codebase-architecture
-      - wayfinder
+
+  # Covers debugging/code-review/planning instead of mattpocock/skills'
+  # diagnosing-bugs/code-review/grilling+wayfinder (see comment above) -
+  # picked over the other package for these three jobs, not in addition to
+  # it. Installable cleanly via the `skills` CLI same as any other package
+  # here (`npx skills add obra/superpowers --list` finds all 14 as plain
+  # SKILL.md files) - the README's per-tool plugin-marketplace install
+  # (`/plugin install superpowers@...`) is a narrower, Claude-Code-only
+  # path this manifest doesn't need.
+  #   - systematic-debugging: hypothesis-driven debugging loop
+  #   - requesting-code-review / receiving-code-review: asking for review
+  #     and evaluating feedback you get back, as two distinct skills
+  #   - brainstorming / writing-plans / executing-plans /
+  #     subagent-driven-development: idea -> spec -> written plan ->
+  #     execution, either inline with checkpoints (executing-plans) or via
+  #     parallel subagents on independent tasks (subagent-driven-development)
+  #   - test-driven-development: write-the-test-first discipline for any
+  #     feature or bugfix
+  #   - dispatching-parallel-agents: fan out 2+ independent tasks with no
+  #     shared state/sequential dependency
+  #   - using-git-worktrees / finishing-a-development-branch: isolate
+  #     feature work in its own worktree, then decide how to integrate it
+  #     once done
+  #   - verification-before-completion: run and confirm verification
+  #     commands before claiming something is fixed/passing
+  #   - writing-skills: authoring/editing/verifying skills themselves
+  # Deliberately NOT picked (out of scope for now, revisit later):
+  #   - using-superpowers: hijacks every conversation before any response,
+  #     requiring skill invocation before ANY reply including clarifying
+  #     questions - too invasive a default to take on without deciding
+  #     that's wanted
+  - source: "obra/superpowers"
+    name: "Superpowers (debugging/review/planning)"
+    description: "Systematic debugging, code review, and idea-to-plan pipeline"
+    skills:
+      - systematic-debugging
+      - requesting-code-review
+      - receiving-code-review
+      - brainstorming
+      - writing-plans
+      - executing-plans
+      - subagent-driven-development
+      - test-driven-development
+      - dispatching-parallel-agents
+      - using-git-worktrees
+      - finishing-a-development-branch
+      - verification-before-completion
+      - writing-skills
 
   # Rewrites AI-sounding prose (stock phrasing, filler, passive voice, etc.)
   # to read naturally without changing what it says.

@@ -108,9 +108,16 @@ github_rules::_field_options_table() {
 
 # github_rules::_render_block OWNER PROJECT -> prints the full
 # board-specific markdown block (unwrapped - no marker comments; the
-# caller wraps it via github_rules::_upsert_block).
+# caller wraps it via github_rules::_upsert_block). The fixed prose lives
+# in bin/lib/templates/github-issue-rules.md (edit that file, not this
+# function, to reword it) - this function only computes the values that
+# vary per board and substitutes them into the template's {{PLACEHOLDER}}
+# tokens.
 github_rules::_render_block() {
   local owner="$1" project="$2"
+  local template_path="$AI_ENV_SETUP_HOME/bin/lib/templates/github-issue-rules.md"
+  [[ -f "$template_path" ]] || die "template missing: $template_path"
+
   local fields_json project_json project_id project_url project_title
   fields_json="$(github_rules::_fields_json "$owner" "$project")"
 
@@ -125,49 +132,45 @@ github_rules::_render_block() {
   priority_id="$(github_rules::_field_id "$fields_json" "Priority")"
   size_id="$(github_rules::_field_id "$fields_json" "Size")"
 
-  printf '## GitHub Issue board wiring\n\n'
-  printf 'Board: [%s](%s) (project %s, owner %s).\n\n' "$project_title" "$project_url" "$project" "$owner"
-  printf 'Every `gh issue create` must be followed by adding the issue to the\n'
-  printf 'project board and assigning it to a column. Never leave an issue\n'
-  printf 'floating off the board.\n\n'
-  printf '**Project metadata:**\n\n'
-  printf -- '- Project ID: `%s`\n' "$project_id"
-  [[ -n "$status_id" ]] && printf -- '- Status field ID: `%s`\n' "$status_id"
-  [[ -n "$priority_id" ]] && printf -- '- Priority field ID: `%s`\n' "$priority_id"
-  [[ -n "$size_id" ]] && printf -- '- Size field ID: `%s`\n' "$size_id"
-  printf '\n'
+  local field_id_lines=""
+  [[ -n "$status_id" ]] && printf -v field_id_lines '%s\n- Status field ID: `%s`' "$field_id_lines" "$status_id"
+  [[ -n "$priority_id" ]] && printf -v field_id_lines '%s\n- Priority field ID: `%s`' "$field_id_lines" "$priority_id"
+  [[ -n "$size_id" ]] && printf -v field_id_lines '%s\n- Size field ID: `%s`' "$field_id_lines" "$size_id"
+  field_id_lines="${field_id_lines#$'\n'}"
 
+  local two_step_section=""
   if [[ -n "$status_id" ]]; then
-    printf '**Two-step pattern** (re-verify option IDs via `gh project\n'
-    printf 'field-list %s --owner %s --format json` if the board structure\n' "$project" "$owner"
-    printf 'changes):\n\n'
-    printf '```bash\n'
-    printf '# Step 1: create the issue\n'
-    printf 'gh issue create --title "..." --body "..."  # -> returns the issue URL\n\n'
-    printf '# Step 2: add to the board + assign column\n'
-    printf 'ITEM_ID=$(gh project item-add %s --owner %s \\\n' "$project" "$owner"
-    printf '  --url <issue-url-from-step-1> --format json | jq -r .id)\n'
-    printf 'gh project item-edit \\\n'
-    printf '  --project-id %s \\\n' "$project_id"
-    printf '  --field-id %s \\\n' "$status_id"
-    printf '  --id "$ITEM_ID" \\\n'
-    printf '  --single-select-option-id <column-option-id>\n'
-    printf '```\n\n'
+    printf -v two_step_section \
+      '**Two-step pattern** (re-verify option IDs via `gh project\nfield-list %s --owner %s --format json` if the board structure\nchanges):\n\n```bash\n# Step 1: create the issue\ngh issue create --title "..." --body "..."  # -> returns the issue URL\n\n# Step 2: add to the board + assign column\nITEM_ID=$(gh project item-add %s --owner %s \\\n  --url <issue-url-from-step-1> --format json | jq -r .id)\ngh project item-edit \\\n  --project-id %s \\\n  --field-id %s \\\n  --id "$ITEM_ID" \\\n  --single-select-option-id <column-option-id>\n```' \
+      "$project" "$owner" "$project" "$owner" "$project_id" "$status_id"
   fi
 
-  local table
+  local option_tables="" table
   if [[ -n "$status_id" ]]; then
     table="$(github_rules::_field_options_table "$fields_json" "Status")"
-    [[ -n "$table" ]] && printf '%s\n\n' "$table"
+    [[ -n "$table" ]] && option_tables+="$table"$'\n\n'
   fi
   if [[ -n "$priority_id" ]]; then
     table="$(github_rules::_field_options_table "$fields_json" "Priority")"
-    [[ -n "$table" ]] && printf '%s\n\n' "$table"
+    [[ -n "$table" ]] && option_tables+="$table"$'\n\n'
   fi
   if [[ -n "$size_id" ]]; then
     table="$(github_rules::_field_options_table "$fields_json" "Size")"
-    [[ -n "$table" ]] && printf '%s\n\n' "$table"
+    [[ -n "$table" ]] && option_tables+="$table"$'\n\n'
   fi
+
+  local rendered
+  rendered="$(cat "$template_path")"
+  rendered="${rendered//\{\{PROJECT_TITLE\}\}/$project_title}"
+  rendered="${rendered//\{\{PROJECT_URL\}\}/$project_url}"
+  rendered="${rendered//\{\{PROJECT_NUMBER\}\}/$project}"
+  rendered="${rendered//\{\{OWNER\}\}/$owner}"
+  rendered="${rendered//\{\{PROJECT_ID\}\}/$project_id}"
+  rendered="${rendered//\{\{FIELD_ID_LINES\}\}/$field_id_lines}"
+  rendered="${rendered//\{\{TWO_STEP_SECTION\}\}/$two_step_section}"
+  rendered="${rendered//\{\{OPTION_TABLES\}\}/$option_tables}"
+
+  printf '%s\n' "$rendered"
 }
 
 # github_rules::_upsert_block FILE BLOCK

@@ -98,11 +98,7 @@ manifest/
   mcp.yaml                     # remote MCP servers configured per-tool
 skills/<name>/               # my own skills, shared - any tool's manifest entry can link them in
 rules/<topic>.md              # universal, tool-agnostic rules shared across every project - see "Adding a universal rule"
-config/
-  claude/                     # config specific to Claude Code, mirrored into ~/.claude/
-    CLAUDE.md
-  codex/                       # same idea for Codex, currently install-only (no links yet)
-  cursor/                       # stub - Cursor isn't installed/configured yet
+config/<id>/                 # per-tool config not covered by skills/ or rules/ (currently unused - no tool needs one)
 bin/
   setup.sh                     # main entrypoint
   lib/

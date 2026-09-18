@@ -28,6 +28,39 @@ source "$script_dir/lib/mcp.sh"
 # shellcheck source=lib/github_rules.sh
 source "$script_dir/lib/github_rules.sh"
 
+usage() {
+  cat <<'EOF'
+ai-env-setup - keeps AI tooling installed and configured identically
+across machines. Safe to re-run any time.
+
+USAGE:
+  ai-env-setup [-h|--help]
+  ai-env-setup add-github-issue-rules [--owner <login>] [--project <number>]
+
+With no arguments, runs the full setup flow: installs Homebrew deps, lets
+you pick which AI tools/skills/plugins/MCP servers to configure (or reuses
+your last picks), and applies manifest/*.yaml to this machine.
+
+ENVIRONMENT VARIABLES (bypass the interactive pickers):
+  AI_ENV_SETUP_TOOLS=<id>[,<id>...]   Skip the tool picker; select these
+                                       tool ids from manifest/tools.yaml
+                                       (e.g. claude,codex).
+  AI_ENV_SETUP_ALL=1                  Select everything in every picker
+                                       (tools, skills, plugins, MCP) with
+                                       no gum/TTY required.
+
+SUBCOMMANDS:
+  add-github-issue-rules [--owner <login>] [--project <number>]
+      Run from inside a target project's own repo (not this one). Discovers
+      that repo's real GitHub Projects (v2) board via `gh` and writes a
+      freshly-fetched, board-specific rules block into that project's own
+      AGENTS.md. --owner/--project skip the auto-detection/interactive
+      picker. Requires `gh`, authenticated with the 'project' token scope.
+
+See README.md in this repo for the full manifest schema and more detail.
+EOF
+}
+
 self_link_path() {
   local bin_dir="$HOME/.local/bin"
   local link="$bin_dir/ai-env-setup"
@@ -42,11 +75,17 @@ self_link_path() {
 }
 
 main() {
-  if [[ "${1:-}" == "add-github-issue-rules" ]]; then
-    shift
-    github_rules::run "$@"
-    exit $?
-  fi
+  case "${1:-}" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    add-github-issue-rules)
+      shift
+      github_rules::run "$@"
+      exit $?
+      ;;
+  esac
 
   ensure_macos
 

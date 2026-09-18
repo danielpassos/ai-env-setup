@@ -4,10 +4,15 @@
 # install.method: npm | brew_cask | brew_formula | none (installed manually)
 # links: source is a path relative to the repo root, symlinked to
 #   <home>/<target>. Use config/<id>/... for config specific to one tool, or
-#   a shared root path (e.g. skills/) for things multiple tools can reuse.
+#   a shared root path (e.g. skills/, rules/) for things multiple tools can
+#   reuse.
 #   expand: true syncs each child of source as its own symlink instead of
 #   the whole directory (used for skills/, where you want each item
 #   individually backed-up/linked rather than the whole folder as one unit).
+#   concat: true concatenates every child of source into one generated file
+#   at target instead of symlinking (used for rules/ -> Codex's single
+#   global AGENTS.md, which has no directory-of-topics equivalent). Mutually
+#   exclusive with expand.
 # skills_agent: this tool's agent id in the `skills` CLI (manifest/skills.yaml's
 #   `only` field), if different from this tool's own id. Omit when they match.
 
@@ -25,6 +30,9 @@ tools:
       - source: "skills"
         target: "skills"
         expand: true
+      - source: "rules"
+        target: "rules"
+        expand: true
 
   - id: codex
     name: "Codex CLI"
@@ -36,6 +44,9 @@ tools:
       - source: "skills"
         target: "skills"
         expand: true
+      - source: "rules"
+        target: "AGENTS.md"
+        concat: true
 
   - id: cursor
     name: "Cursor"

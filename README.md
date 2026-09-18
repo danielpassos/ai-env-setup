@@ -62,6 +62,7 @@ manifest/
   plugins.yaml                 # Claude Code plugins pulled in via `claude plugin install`
   mcp.yaml                     # remote MCP servers configured per-tool
 skills/<name>/               # my own skills, shared - any tool's manifest entry can link them in
+rules/<topic>.md              # universal, tool-agnostic rules shared across every project - see "Adding a universal rule"
 config/
   claude/                     # config specific to Claude Code, mirrored into ~/.claude/
     CLAUDE.md
@@ -113,6 +114,28 @@ Create `skills/<name>/SKILL.md`, then add it to whichever tool's `links` list
 should pick it up (via the `skills` -> `skills`, `expand: true` entry - see
 `manifest/tools.yaml` for tools that already have one). Any tool that later
 gains its own skills concept can link the same `skills/` directory in.
+
+## Adding a universal rule
+
+`rules/<topic>.md` holds a behavioral rule that's genuinely universal - true
+for every project, not tied to one project's IDs or conventions, and worded
+without any one tool's specific syntax (no literal tool-call snippets, no
+"the Edit tool" style references). Each file is one topic.
+
+Link it into whichever tools should receive it, in `manifest/tools.yaml`:
+
+- A tool with a directory-of-topics instructions mechanism (like Claude
+  Code's `~/.claude/rules/`) uses `expand: true`, same as `skills/` - each
+  file becomes its own symlink.
+- A tool with a single global instructions file (like Codex CLI's
+  `~/.codex/AGENTS.md`) uses `concat: true` - every file under `rules/` is
+  concatenated into one generated file, marked at the top as
+  generated-do-not-edit. Hand-editing that generated file gets it backed up
+  to `<target>.bak` on the next run rather than silently overwritten.
+
+Project-specific content (fixed IDs, a project's own commit-scope list,
+etc.) does **not** belong in `rules/` - keep that in the project's own
+`AGENTS.md`/`CLAUDE.md` instead.
 
 ## Adding an external skill package
 

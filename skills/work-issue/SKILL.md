@@ -98,8 +98,16 @@ the PR merges, via the `cleanup-worktrees` skill.
 ## Per-issue flow
 
 1. **Pick task.** Single-issue mode: confirm the issue body has enough detail
-   to act. Batch mode: take the top item from the named column. If the body
-   is too thin or the scope is unclear, surface it and ask before coding.
+   to act. Batch mode: take the top item from the named column. **Always read
+   the issue's comments**, not just the body - use `gh issue view
+   <issue-number> --comments` (or `gh api
+   repos/<owner>/<repo>/issues/<issue-number>/comments`) to fetch the full
+   thread. Implementation-relevant details often only show up there:
+   clarified scope, a chosen approach, answers to open questions, or a
+   reviewer flagging a different direction after the issue was filed. Treat
+   the comments as part of the spec, not optional color. If the body plus
+   comments are still too thin or the scope is unclear, surface it and ask
+   before coding.
 2. **Sync refs.** `git fetch origin`.
 3. **Move the issue to `In progress`** on the board (`gh project item-edit
    --project-id <id> --field-id <status-field-id> --id <item-id>

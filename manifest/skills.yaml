@@ -192,6 +192,17 @@ packages:
     name: "Caveman"
     description: "Ultra-compressed output mode plus workflow/subagent-delegation skills"
 
+  # Reshapes replies to lead with the answer/next action, numbered steps,
+  # capped lists, no preamble/recaps - opt-in per session via /i-have-adhd
+  # (disable-model-invocation: true, so it never auto-fires). Repo also
+  # ships a Claude-Code-only plugin with an always-on SessionStart hook -
+  # not picked here, same reasoning as obra/superpowers above: the plain
+  # `skills add` route works for every tool this manifest manages, the
+  # plugin route only for Claude Code.
+  - source: "ayghri/i-have-adhd"
+    name: "I Have ADHD"
+    description: "ADHD-friendly output style: answer-first, numbered, no preamble"
+
   # Only "web-design-engineer" - the one skill in this repo relevant to
   # building websites: polished HTML/CSS/JS/React pages, dashboards,
   # prototypes, and design systems, judged against a "stunning, not just

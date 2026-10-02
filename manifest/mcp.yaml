@@ -18,7 +18,7 @@
 # `mcp add` subcommand (see bin/lib/mcp.sh). Cursor has no such CLI, so its
 # entry is written directly into ~/.cursor/mcp.json instead.
 #
-# Both servers below use OAuth 2.1 - this only writes the config entry
+# All servers below use OAuth 2.1 - this only writes the config entry
 # pointing at the server, it can't complete the login for you. Claude Code
 # and Cursor prompt for OAuth on first use inside the tool; Codex CLI needs
 # one manual `codex mcp login <id>` after the entry exists.
@@ -46,3 +46,10 @@ servers:
   - id: supabase
     url: "https://mcp.supabase.com/mcp"
     description: "Query/manage Supabase projects - tables, migrations, edge functions, logs"
+
+  # Query Axiom datasets (APL), metrics, dashboards, and monitors; search
+  # Axiom docs.
+  # https://axiom.co/docs/console/intelligence/mcp-server
+  - id: axiom
+    url: "https://mcp.axiom.co/mcp"
+    description: "Query Axiom logs/metrics, manage dashboards and monitors"

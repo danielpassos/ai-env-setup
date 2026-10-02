@@ -201,7 +201,7 @@ packages:
   # plugin route only for Claude Code.
   - source: "ayghri/i-have-adhd"
     name: "I Have ADHD"
-    description: "ADHD-friendly output style: answer-first, numbered, no preamble"
+    description: "ADHD-friendly output style - answer-first, numbered, no preamble"
 
   # Only "web-design-engineer" - the one skill in this repo relevant to
   # building websites: polished HTML/CSS/JS/React pages, dashboards,

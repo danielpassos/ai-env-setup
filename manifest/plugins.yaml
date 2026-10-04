@@ -68,3 +68,14 @@ packages:
     marketplace: "visual-explainer-marketplace"
     plugin: "visual-explainer"
     description: "Generates HTML pages for diagrams, diff/plan reviews, and slides"
+
+  # Lets Claude "watch" a video via /watch: yt-dlp download, scene-change
+  # frame extraction (ffmpeg), 0-10s hook breakdown, captions or Whisper
+  # transcript, structured report. yt-dlp/ffmpeg install on first run via
+  # brew; Whisper API key only needed for videos without captions.
+  # https://github.com/taoufik123-collab/claude-watch
+  - marketplace_source: "taoufik123-collab/claude-watch"
+    marketplace: "claude-watch"
+    plugin: "watch"
+    name: "Watch"
+    description: "Lets Claude watch videos: scene-change frames + transcript + report"

@@ -36,20 +36,25 @@ narrowing instead of glossing over it.
   `[[ "${#arr[@]}" -gt 0 ]]` before expanding an array that might be empty;
   never assume bash 4+ semantics (no associative arrays either).
 
-- **`gum choose` (v2.0.0) quirks**, used for the interactive tool picker in
-  `bin/lib/tools.sh`:
+- **`gum choose` quirks**, used by `picker::select` in `bin/lib/common.sh`
+  (shared by the tool/skills/plugins/MCP pickers):
   - In `--no-limit` mode the toggle key is **`x`**, not the space bar most
     checkbox UIs use. Easy to miss in the small footer hint - the prompt
     header spells it out explicitly for this reason.
-  - `--selected` (preselecting previously-chosen items) is broken when
-    combined with `--label-delimiter`: an item preselected but left
-    untouched by the user silently drops out of the final output instead of
-    being returned, corrupting the result. Don't rely on `--selected` for
-    preselection here - the picker instead shows the previous pick as a text
-    hint in the header and lets the user re-tick it.
-  - `--label-delimiter=":"` lets options be passed as `"label:value"` pairs
-    so gum returns a stable id directly instead of round-tripping a display
-    name back to an id via string matching (fragile, was a real bug).
+  - Preselecting the previous pick works with `--selected <label>` (one flag
+    per item) **as long as `--label-delimiter` is NOT used**. Verified with
+    a pty harness on gum 2.0.2: untouched preselected items are returned,
+    toggling one off removes it, toggling a new one on adds it, zero
+    selections works. Combined with `--label-delimiter`, `--selected <id>`
+    never matches (nothing is ticked), and gum 2.0.0 reportedly dropped
+    preselected-but-untouched items from the output (2.0.2 returned them
+    with `--selected <label>`, but don't depend on it). So `picker::select`
+    passes plain labels, and maps the returned label back to an id by exact
+    match against a label->id table it builds. To keep that mapping 1:1: the
+    label is everything before the *last* `:` of the input line; `,` in a
+    label is replaced by `;` (`--selected` splits on commas, so a comma in a
+    label can never be preselected); a duplicate label gets ` [id]`
+    appended. Don't reintroduce `--label-delimiter` or substring matching.
   - Testing the picker non-interactively is hard - `gum choose` needs a real
     controlling terminal (opens `/dev/tty` directly for its TUI, independent
     of stdin/stdout redirection). A Python `pty.fork()` harness with a
@@ -94,6 +99,29 @@ it. An agent is synced only if also selected that run and its CLI exists. The st
 deselect/removal (`plugins::_uninstall`) tries every present CLI and
 ignores "not installed" failures. `codex plugin add` has no `-y` flag.
 
+## Sync records (`~/.config/ai-env-setup/synced`)
+
+`bin/lib/synced.sh`. Tab-separated lines `category<TAB>id<TAB>tool<TAB>hash`
+(category skills/plugins/mcp; tool = `skills` CLI agent id for skills,
+claude/codex for plugins, claude/codex/cursor for MCP; hash = sha256 of the
+manifest entry as compact JSON via `yq`). `skills::sync`, `plugins::sync`,
+and `mcp::sync` skip a pair with a matching record (`synced::is_current`)
+and call `synced::record` only after that pair's sync succeeded - so every
+`mcp::_sync_*` / `plugins::_install_for` must return non-zero on failure,
+and `skills::sync` records nothing for a call whose output contains
+`Failed to install`. Skills are one `skills add` call per package but
+records are per agent, and only the agents without a current record are
+passed to `--agent`, so adding a tool syncs just that tool. The `_uninstall`
+paths call `synced::drop`. `--resync` / `AI_ENV_SETUP_RESYNC=1` makes
+`synced::is_current` always fail. Cheap steps are deliberately not tracked.
+
+Migration: `synced::begin` (called in `bin/setup.sh` before any picker)
+creates the file empty when missing and, if a previous `selected-tools`
+exists, snapshots the previous `selected-*` files (the pickers overwrite
+them). Pairs in that snapshot (item previously selected AND tool previously
+selected; plugins only for claude) are recorded as synced on first check
+without calling a CLI. Items outside the snapshot sync normally.
+
 ## Testing without the interactive picker
 
 `AI_ENV_SETUP_TOOLS=claude,codex ./bin/setup.sh` bypasses `gum choose`
@@ -101,4 +129,6 @@ entirely (see `tools::select` in `bin/lib/tools.sh`) - use this for any
 non-interactive end-to-end verification. It also writes to
 `~/.config/ai-env-setup/selected-tools`, the same state file the real
 interactive picker reads/writes - clean that up after testing if it wasn't
-already reflecting the user's actual preference.
+already reflecting the user's actual preference. The same goes for the
+`synced` records. For stubbed end-to-end tests, use a temp `HOME` and fake
+`claude`/`codex`/`npx`/`brew` on `PATH` instead of touching the real one.

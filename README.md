@@ -44,8 +44,31 @@ To skip the interactive prompt (e.g. in a script), set
 
 Besides tools, `ai-env-setup` also asks which skill packages
 (`manifest/skills.yaml`), plugins (`manifest/plugins.yaml`), and
-MCP servers (`manifest/mcp.yaml`) to install/configure - each remembers your
-last pick as next run's default the same way the tools picker does.
+MCP servers (`manifest/mcp.yaml`) to install/configure. Every picker shows the
+full list with your previous pick already ticked: press `x` to toggle an
+entry, `enter` to confirm. So after adding something to a manifest you only
+tick the new entry and confirm. Anything you untick is uninstalled.
+
+Already-synced work is skipped too. After each successful sync of a skill
+package, plugin, or MCP server for a given tool (`claude`, `codex`, ...),
+`ai-env-setup` records a hash of that manifest entry in
+`~/.config/ai-env-setup/synced`. A re-run logs `up to date, skipping` for a
+pair whose entry is unchanged and only syncs new entries, edited entries
+(any change to the entry, description included, changes the hash), and
+tools you've newly added. Failed syncs are never recorded, so they retry
+next run. Deselecting an item drops its records. Cheap steps (brew bundle,
+tool install, link/rule syncing) always run.
+
+To ignore the records and re-sync everything (e.g. after removing something
+by hand), run `ai-env-setup --resync` (or set `AI_ENV_SETUP_RESYNC=1`).
+
+The first run after upgrading to this behavior has no `synced` file, so it
+assumes whatever was in your previous selection is already synced (plugins
+only for `claude`, since codex plugins are newer) and records it without
+calling any CLI. Entries you hadn't selected before, or that were added to
+the manifest since your last run, sync normally. If you had edited an entry
+in the manifest between your last real run and that first run, use
+`--resync` once.
 
 To select everything instead of picking, set `AI_ENV_SETUP_ALL=1` - it
 bypasses every interactive picker (tools, skills, plugins, MCP) and selects

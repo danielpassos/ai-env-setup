@@ -189,6 +189,12 @@ mcp::_sync_codex() {
     return 1
   fi
 
+  # For OAuth servers `codex mcp add` goes on to run the login flow and
+  # blocks until the browser authorization finishes; its output is captured
+  # below, so say why this step may sit there. (Cancelling the run here
+  # leaves this and later servers unrecorded - they sync on the next run.)
+  log_info "codex: adding MCP server $id (OAuth servers wait for browser login)"
+
   local out status=0
   out="$(codex mcp add "$id" --url "$url" 2>&1)" || status=$?
 

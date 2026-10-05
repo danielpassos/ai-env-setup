@@ -19,6 +19,8 @@ source "$script_dir/lib/tools.sh"
 source "$script_dir/lib/install.sh"
 # shellcheck source=lib/links.sh
 source "$script_dir/lib/links.sh"
+# shellcheck source=lib/synced.sh
+source "$script_dir/lib/synced.sh"
 # shellcheck source=lib/skills.sh
 source "$script_dir/lib/skills.sh"
 # shellcheck source=lib/plugins.sh
@@ -34,12 +36,26 @@ ai-env-setup - keeps AI tooling installed and configured identically
 across machines. Safe to re-run any time.
 
 USAGE:
+  ai-env-setup [--resync]
   ai-env-setup [-h|--help]
   ai-env-setup add-github-issue-rules [--owner <login>] [--project <number>]
 
 With no arguments, runs the full setup flow: installs Homebrew deps, lets
-you pick which AI tools/skills/plugins/MCP servers to configure (or reuses
-your last picks), and applies manifest/*.yaml to this machine.
+you pick which AI tools/skills/plugins/MCP servers to configure (your last
+picks come up already ticked - toggle what changed with x, enter to
+confirm), and applies manifest/*.yaml to this machine.
+
+Skill packages, plugins and MCP servers that are already synced (same
+manifest entry, same target tool as last time) are skipped, tracked in
+~/.config/ai-env-setup/synced. New, edited, or newly-applicable entries
+sync as normal.
+
+OPTIONS:
+  --resync                            Ignore the synced records and re-sync
+                                       every selected skill package, plugin
+                                       and MCP server (e.g. after removing
+                                       something by hand). Same as
+                                       AI_ENV_SETUP_RESYNC=1.
 
 ENVIRONMENT VARIABLES (bypass the interactive pickers):
   AI_ENV_SETUP_TOOLS=<id>[,<id>...]   Skip the tool picker; select these
@@ -48,6 +64,7 @@ ENVIRONMENT VARIABLES (bypass the interactive pickers):
   AI_ENV_SETUP_ALL=1                  Select everything in every picker
                                        (tools, skills, plugins, MCP) with
                                        no gum/TTY required.
+  AI_ENV_SETUP_RESYNC=1               Same as --resync.
 
 SUBCOMMANDS:
   add-github-issue-rules [--owner <login>] [--project <number>]
@@ -75,22 +92,27 @@ self_link_path() {
 }
 
 main() {
-  case "${1:-}" in
-    -h | --help)
-      usage
-      exit 0
-      ;;
-    add-github-issue-rules)
-      shift
-      github_rules::run "$@"
-      exit $?
-      ;;
-    "")
-      ;; # no command given - fall through to the normal setup flow below
-    *)
-      die "unknown command: $1 (see 'ai-env-setup --help')"
-      ;;
-  esac
+  # Leading flags first (only --resync today), then an optional subcommand.
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      --resync)
+        export AI_ENV_SETUP_RESYNC=1
+        shift
+        ;;
+      add-github-issue-rules)
+        shift
+        github_rules::run "$@"
+        exit $?
+        ;;
+      *)
+        die "unknown command: $1 (see 'ai-env-setup --help')"
+        ;;
+    esac
+  done
 
   ensure_macos
 
@@ -98,6 +120,10 @@ main() {
 
   brew::ensure_installed
   brew::bundle
+
+  # Must run before any picker: on the one-time migration run it snapshots
+  # the previous selection that the pickers are about to overwrite.
+  synced::begin
 
   local selected=() line
   while IFS= read -r line; do selected+=("$line"); done < <(tools::select)
@@ -121,6 +147,7 @@ main() {
     mcp::sync "${selected[@]}"
   fi
 
+  synced::end
   self_link_path
 
   log_success "all done"

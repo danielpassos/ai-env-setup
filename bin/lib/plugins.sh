@@ -23,6 +23,8 @@ readonly PLUGINS_MANIFEST PLUGINS_STATE_FILE
 plugins::_uninstall() {
   local id="$1" agent found=0
 
+  synced::drop plugins "$id"
+
   log_info "removing deselected plugin: $id"
   for agent in claude codex; do
     command -v "$agent" >/dev/null 2>&1 || continue
@@ -209,7 +211,7 @@ plugins::sync() {
     return 0
   fi
 
-  local i marketplace_source marketplace plugin line agent targets
+  local i marketplace_source marketplace plugin line agent targets entry_hash announced
   for ((i = 0; i < count; i++)); do
     marketplace_source="$(yq e ".packages[$i].marketplace_source" "$PLUGINS_MANIFEST")"
     marketplace="$(yq e ".packages[$i].marketplace" "$PLUGINS_MANIFEST")"
@@ -227,7 +229,10 @@ plugins::sync() {
     done < <(yq e ".packages[$i].agents // [] | .[]" "$PLUGINS_MANIFEST")
     [[ "${#targets[@]}" -eq 0 ]] && targets=(claude)
 
-    log_info "syncing plugin: $plugin@$marketplace"
+    # Records are per (plugin, agent): an agent with an up-to-date record
+    # (same manifest entry as last successful sync) is skipped.
+    entry_hash="$(synced::hash_entry "$PLUGINS_MANIFEST" ".packages[$i]")"
+    announced=0
 
     for agent in "${targets[@]}"; do
       case "$agent" in
@@ -238,7 +243,19 @@ plugins::sync() {
           continue
           ;;
       esac
-      plugins::_install_for "$agent" "$marketplace_source" "$marketplace" "$plugin" || true
+
+      if synced::is_current plugins "$plugin@$marketplace" "$agent" "$entry_hash"; then
+        log_info "up to date, skipping: $plugin@$marketplace ($agent)"
+        continue
+      fi
+
+      if [[ "$announced" -eq 0 ]]; then
+        log_info "syncing plugin: $plugin@$marketplace"
+        announced=1
+      fi
+      if plugins::_install_for "$agent" "$marketplace_source" "$marketplace" "$plugin"; then
+        synced::record plugins "$plugin@$marketplace" "$agent" "$entry_hash"
+      fi
     done
   done
 }

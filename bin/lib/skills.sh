@@ -25,6 +25,10 @@ skills::_read_list() {
 skills::_uninstall() {
   local source="$1"
 
+  # Forget the sync records first: whether or not the removal below
+  # succeeds, re-ticking this package later must sync it from scratch.
+  synced::drop skills "$source"
+
   # Written to a real file rather than captured via $(...): piping a large
   # `skills list` straight into command substitution truncates it at
   # exactly 64KB (macOS's default pipe buffer size) - a Node process_exit
@@ -165,6 +169,7 @@ skills::sync() {
   fi
 
   local i source line skills_list only_list agents_list tool_id args
+  local agent dup entry_hash pending_agents
   for ((i = 0; i < count; i++)); do
     source="$(yq e ".packages[$i].source" "$SKILLS_MANIFEST")"
 
@@ -201,11 +206,34 @@ skills::sync() {
       done
     fi
 
+    # Records are per (package, agent): only the agents without an
+    # up-to-date record go into this run's `skills add` call, so a new
+    # package, an edited entry, or a newly added tool syncs just what's
+    # missing. Dedupe agents too (two tool ids could share one agent).
+    entry_hash="$(synced::hash_entry "$SKILLS_MANIFEST" ".packages[$i]")"
+    pending_agents=()
+    for agent in "${agents_list[@]}"; do
+      if [[ "${#pending_agents[@]}" -gt 0 ]]; then
+        dup=0
+        for tool_id in "${pending_agents[@]}"; do
+          [[ "$tool_id" == "$agent" ]] && dup=1
+        done
+        [[ "$dup" -eq 1 ]] && continue
+      fi
+      if synced::is_current skills "$source" "$agent" "$entry_hash"; then
+        log_info "up to date, skipping: $source ($agent)"
+      else
+        pending_agents+=("$agent")
+      fi
+    done
+
+    [[ "${#pending_agents[@]}" -eq 0 ]] && continue
+
     log_info "syncing skill package: $source"
 
     args=(add "$source" --global --yes)
     [[ "${#skills_list[@]}" -gt 0 ]] && args+=(--skill "${skills_list[@]}")
-    [[ "${#agents_list[@]}" -gt 0 ]] && args+=(--agent "${agents_list[@]}")
+    args+=(--agent "${pending_agents[@]}")
 
     local out status=0
     out="$(npx --yes skills "${args[@]}" 2>&1)" || status=$?
@@ -214,6 +242,9 @@ skills::sync() {
       printf '%s\n' "$out" >&2
       log_warn "$source: some skills failed to install (see output above)"
     else
+      for agent in "${pending_agents[@]}"; do
+        synced::record skills "$source" "$agent" "$entry_hash"
+      done
       log_success "synced: $source"
     fi
   done

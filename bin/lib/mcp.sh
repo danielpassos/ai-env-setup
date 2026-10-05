@@ -76,6 +76,7 @@ mcp::_uninstall_cursor() {
 # _uninstall_* is a safe no-op wherever the server was never configured.
 mcp::_uninstall() {
   local id="$1"
+  synced::drop mcp "$id"
   log_info "removing deselected MCP server: $id"
   mcp::_uninstall_claude "$id"
   mcp::_uninstall_codex "$id"
@@ -163,7 +164,7 @@ mcp::_sync_claude() {
 
   if ! command -v claude >/dev/null 2>&1; then
     log_warn "claude: CLI not found, skipping MCP server $id"
-    return 0
+    return 1
   fi
 
   local out status=0
@@ -176,6 +177,7 @@ mcp::_sync_claude() {
   else
     printf '%s\n' "$out" >&2
     log_warn "claude: failed to configure MCP server $id (see output above)"
+    return 1
   fi
 }
 
@@ -184,7 +186,7 @@ mcp::_sync_codex() {
 
   if ! command -v codex >/dev/null 2>&1; then
     log_warn "codex: CLI not found, skipping MCP server $id"
-    return 0
+    return 1
   fi
 
   local out status=0
@@ -197,6 +199,7 @@ mcp::_sync_codex() {
   else
     printf '%s\n' "$out" >&2
     log_warn "codex: failed to configure MCP server $id (see output above)"
+    return 1
   fi
 }
 
@@ -212,6 +215,7 @@ mcp::_sync_cursor() {
     log_success "cursor: configured MCP server $id"
   else
     log_warn "cursor: failed to write $file for MCP server $id"
+    return 1
   fi
 }
 
@@ -239,7 +243,7 @@ mcp::sync() {
     return 0
   fi
 
-  local i id url only_list line tool_id target_ids
+  local i id url only_list line tool_id target_ids entry_hash announced
   for ((i = 0; i < count; i++)); do
     id="$(yq e ".servers[$i].id" "$MCP_MANIFEST")"
     url="$(yq e ".servers[$i].url" "$MCP_MANIFEST")"
@@ -262,15 +266,32 @@ mcp::sync() {
       continue
     fi
 
-    log_info "syncing MCP server: $id"
+    # Records are per (server, tool): only tools without an up-to-date
+    # record (same manifest entry as last successful sync) are configured.
+    entry_hash="$(synced::hash_entry "$MCP_MANIFEST" ".servers[$i]")"
+    announced=0
 
     for tool_id in "${target_ids[@]}"; do
       case "$tool_id" in
-        claude) mcp::_sync_claude "$id" "$url" ;;
-        codex) mcp::_sync_codex "$id" "$url" ;;
-        cursor) mcp::_sync_cursor "$id" "$url" ;;
-        *) log_warn "$id: tool '$tool_id' has no MCP support wired up, skipping" ;;
+        claude | codex | cursor) ;;
+        *)
+          log_warn "$id: tool '$tool_id' has no MCP support wired up, skipping"
+          continue
+          ;;
       esac
+
+      if synced::is_current mcp "$id" "$tool_id" "$entry_hash"; then
+        log_info "up to date, skipping: $id ($tool_id)"
+        continue
+      fi
+
+      if [[ "$announced" -eq 0 ]]; then
+        log_info "syncing MCP server: $id"
+        announced=1
+      fi
+      if "mcp::_sync_$tool_id" "$id" "$url"; then
+        synced::record mcp "$id" "$tool_id" "$entry_hash"
+      fi
     done
   done
 }

@@ -20,9 +20,9 @@ This clones the repo to `~/.ai-env-setup` and runs `bin/setup.sh`, which:
    home directory
 4. installs the skill packages listed in `manifest/skills.yaml`, via
    `npx skills add`
-5. installs the Claude Code plugins listed in `manifest/plugins.yaml`, via
-   `claude plugin marketplace add` + `claude plugin install` (only when
-   `claude` is among the selected tools)
+5. installs the plugins listed in `manifest/plugins.yaml`, via each agent's
+   `plugin marketplace add` + install command (Claude Code by default,
+   Codex too when a package opts in; only for selected tools)
 6. configures the remote MCP servers listed in `manifest/mcp.yaml` for each
    selected tool
 7. links itself onto your `PATH` as `ai-env-setup`
@@ -43,7 +43,7 @@ To skip the interactive prompt (e.g. in a script), set
 `manifest/tools.yaml`).
 
 Besides tools, `ai-env-setup` also asks which skill packages
-(`manifest/skills.yaml`), Claude Code plugins (`manifest/plugins.yaml`), and
+(`manifest/skills.yaml`), plugins (`manifest/plugins.yaml`), and
 MCP servers (`manifest/mcp.yaml`) to install/configure - each remembers your
 last pick as next run's default the same way the tools picker does.
 
@@ -101,7 +101,7 @@ Brewfile                    # ai-env-setup's own deps: yq, gum (not the AI tools
 manifest/
   tools.yaml                 # the registry: every AI tool ai-env-setup knows about
   skills.yaml                 # skill packages pulled in via `npx skills add`
-  plugins.yaml                 # Claude Code plugins pulled in via `claude plugin install`
+  plugins.yaml                 # Claude Code / Codex plugins pulled in via each CLI's `plugin` command
   mcp.yaml                     # remote MCP servers configured per-tool
 skills/<name>/               # my own skills, shared - any tool's manifest entry can link them in
 rules/<topic>.md              # universal, tool-agnostic rules shared across every project - see "Adding a universal rule"
@@ -115,7 +115,7 @@ bin/
     install.sh                    # installs a selected tool's CLI (npm / brew_cask / brew_formula)
     links.sh                      # symlinks a selected tool's declared links into its home dir
     skills.sh                      # installs manifest/skills.yaml via `npx skills add`
-    plugins.sh                      # installs manifest/plugins.yaml via `claude plugin install`
+    plugins.sh                      # installs manifest/plugins.yaml via `claude`/`codex plugin`
     mcp.sh                           # configures manifest/mcp.yaml per-tool
 install.sh                    # curl-pipeable bootstrap (clone + hand off to setup.sh)
 ```
@@ -197,28 +197,33 @@ agent this repo doesn't otherwise manage, in which case `agents` takes the
 CLI's own agent ids directly (pass a bogus `--agent` value to
 `npx skills add --help` to see the full accepted list).
 
-## Adding a Claude Code plugin
+## Adding a plugin
 
-Some packages are only ever published as a Claude Code plugin marketplace,
-with no generic `skills add` equivalent - add those to
-`manifest/plugins.yaml` instead. Unlike `manifest/skills.yaml`, this is
-inherently Claude-Code-only (plugin marketplaces are a Claude Code concept),
-so there's no `only`/`agents` field to widen scope to other tools:
+Some packages are only ever published as a plugin marketplace, with no
+generic `skills add` equivalent - add those to `manifest/plugins.yaml`
+instead. Plugins install through each agent's own CLI rather than the
+`skills` CLI, so scope is the optional `agents` field (`claude` and/or
+`codex`, default `["claude"]`) rather than `only`:
 
 ```yaml
 packages:
-  - marketplace_source: "multica-ai/andrej-karpathy-skills"
-    marketplace: "karpathy-skills"    # from the repo's .claude-plugin/marketplace.json
-    plugin: "andrej-karpathy-skills"  # from that file's plugins[].name
+  - agents: ["claude", "codex"]       # optional, defaults to ["claude"]
+    marketplace_source: "latent-spaces/brag"
+    marketplace: "brag"               # from the repo's .claude-plugin/marketplace.json
+    plugin: "brag"                    # from that file's plugins[].name
 ```
 
-This runs `claude plugin marketplace add <marketplace_source>` then
-`claude plugin install <plugin>@<marketplace> -y` for every entry, but only
-when `claude` is among the tools selected this run - both commands are
-idempotent, so re-running is a no-op success. `marketplace` isn't guessed
-from `marketplace_source`; read it from the target repo's own
-`.claude-plugin/marketplace.json` since it doesn't have to match the repo
-name.
+For each agent in `agents` that is also among the tools selected this run
+(and whose CLI is installed), this runs `claude plugin marketplace add
+<marketplace_source>` then `claude plugin install <plugin>@<marketplace>
+-y`, or `codex plugin marketplace add <marketplace_source>` then `codex
+plugin add <plugin>@<marketplace>`. All of these are idempotent, so
+re-running is a no-op success; a failure for one agent doesn't skip the
+other. Only list `codex` for a plugin that ships a Codex manifest.
+`marketplace` isn't guessed from `marketplace_source`; read it from the
+target repo's own `.claude-plugin/marketplace.json` since it doesn't have to
+match the repo name. Deselecting a plugin in the picker tries to uninstall
+it from every agent whose CLI is present.
 
 ## Adding an MCP server
 

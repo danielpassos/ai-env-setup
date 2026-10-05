@@ -22,8 +22,8 @@ say so explicitly rather than presenting it as available.
 Also weigh whether a recommendation works **for every AI tool this repo
 manages** (Claude Code, Codex, Cursor, and whichever "universal" agents are
 selected - see `manifest/tools.yaml`), not just Claude Code. A package only
-installable as a Claude Code plugin, or scoped with `only`/`agents` to a
-single tool, is a narrower recommendation than one that installs cleanly via
+installable as a plugin, or scoped with `only`/`agents` to a single tool,
+is a narrower recommendation than one that installs cleanly via
 `manifest/skills.yaml` for whatever tools the user selects - flag that
 narrowing instead of glossing over it.
 
@@ -84,6 +84,15 @@ narrowing instead of glossing over it.
   (e.g. an agent that "does not support global skill installation"), so
   `bin/lib/skills.sh` also greps captured output for `"Failed to install"`
   rather than trusting the exit code alone.
+
+## Plugins (`manifest/plugins.yaml`)
+
+Installed via each agent's own CLI (`claude plugin ...`, `codex plugin ...`),
+not the `skills` CLI. Optional per-package `agents` (`claude`/`codex`)
+defaults to `[claude]`; an agent is synced only if also selected that run
+and its CLI exists. The state file stores just `plugin@marketplace` ids, so
+deselect/removal (`plugins::_uninstall`) tries every present CLI and
+ignores "not installed" failures. `codex plugin add` has no `-y` flag.
 
 ## Testing without the interactive picker
 

@@ -1,18 +1,24 @@
-# Claude Code plugins - packages only ever published as a Claude Code
-# plugin marketplace, with no generic `skills add` equivalent (see
-# manifest/skills.yaml). Unlike that file, this one is inherently
-# Claude-Code-only: plugin marketplaces are a Claude Code concept, so every
-# entry here only ever installs for the `claude` tool - there's no
-# `only`/`agents` field to widen scope, and there never will be.
+# Plugins - packages only ever published as a plugin marketplace, with no
+# generic `skills add` equivalent (see manifest/skills.yaml). Installed via
+# each agent's own plugin CLI (`claude plugin ...` / `codex plugin ...`),
+# not the `skills` CLI, so scope is set by the optional `agents` field below
+# rather than manifest/skills.yaml's `only`/`agents`.
 #
+# packages[].agents: optional - which agents to install for, a list of
+#   `claude` and/or `codex`. Defaults to ["claude"] when omitted. An agent
+#   is only synced when it is also among the tools selected that run and
+#   its CLI is installed. Codex needs the repo to also ship a
+#   `.codex-plugin/` manifest (or be catalog-compatible).
 # packages[].marketplace_source: owner/repo (or full URL) passed to
-#   `claude plugin marketplace add <source>` - same as the interactive
-#   `/plugin marketplace add`.
+#   `claude plugin marketplace add <source>` (and `codex plugin marketplace
+#   add <source>` for codex) - same as the interactive `/plugin marketplace
+#   add`.
 # packages[].marketplace: the marketplace's own name/id, from its
 #   `.claude-plugin/marketplace.json` (`name`/`id` field) - read from that
 #   file rather than guessed, since it doesn't have to match the repo name.
 # packages[].plugin: the plugin name to install, from the marketplace's
-#   `plugins[].name` - passed as `claude plugin install <plugin>@<marketplace>`.
+#   `plugins[].name` - passed as `claude plugin install <plugin>@<marketplace>`
+#   (or `codex plugin add <plugin>@<marketplace>`).
 # packages[].name: optional - short friendly label shown in the picker.
 #   Falls back to the bare `plugin` name when omitted (already fairly
 #   readable for most of these, unlike manifest/skills.yaml's raw
@@ -79,3 +85,15 @@ packages:
     plugin: "watch"
     name: "Watch"
     description: "Lets Claude watch videos: scene-change frames + transcript + report"
+
+  # Turns a project into a short launch video via /brag (also /brag-slim),
+  # powered by Hyperframes. Requires Node 22+ and ffmpeg on the machine
+  # (Hyperframes is fetched via npx). Ships both Claude Code and Codex
+  # manifests, so it installs for both.
+  # https://github.com/latent-spaces/brag
+  - agents: ["claude", "codex"]
+    marketplace_source: "latent-spaces/brag"
+    marketplace: "brag"
+    plugin: "brag"
+    name: "Brag"
+    description: "Turns a project into a short launch video via /brag (needs Node 22+, ffmpeg)"

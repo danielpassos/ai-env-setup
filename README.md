@@ -202,12 +202,13 @@ CLI's own agent ids directly (pass a bogus `--agent` value to
 Some packages are only ever published as a plugin marketplace, with no
 generic `skills add` equivalent - add those to `manifest/plugins.yaml`
 instead. Plugins install through each agent's own CLI rather than the
-`skills` CLI, so scope is the optional `agents` field (`claude` and/or
-`codex`, default `["claude"]`) rather than `only`:
+`skills` CLI, so scope is the `agents` field (`claude` and/or `codex`)
+rather than `only`. Always set it explicitly on every entry (the sync falls
+back to `["claude"]` if omitted, but don't rely on that):
 
 ```yaml
 packages:
-  - agents: ["claude", "codex"]       # optional, defaults to ["claude"]
+  - agents: ["claude", "codex"]
     marketplace_source: "latent-spaces/brag"
     marketplace: "brag"               # from the repo's .claude-plugin/marketplace.json
     plugin: "brag"                    # from that file's plugins[].name

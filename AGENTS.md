@@ -88,9 +88,9 @@ narrowing instead of glossing over it.
 ## Plugins (`manifest/plugins.yaml`)
 
 Installed via each agent's own CLI (`claude plugin ...`, `codex plugin ...`),
-not the `skills` CLI. Optional per-package `agents` (`claude`/`codex`)
-defaults to `[claude]`; an agent is synced only if also selected that run
-and its CLI exists. The state file stores just `plugin@marketplace` ids, so
+not the `skills` CLI. Every package sets `agents` (`claude`/`codex`)
+explicitly - the code falls back to `[claude]` if omitted, but don't rely on
+it. An agent is synced only if also selected that run and its CLI exists. The state file stores just `plugin@marketplace` ids, so
 deselect/removal (`plugins::_uninstall`) tries every present CLI and
 ignores "not installed" failures. `codex plugin add` has no `-y` flag.
 

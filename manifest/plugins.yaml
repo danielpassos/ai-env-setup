@@ -1,11 +1,12 @@
 # Plugins - packages only ever published as a plugin marketplace, with no
 # generic `skills add` equivalent (see manifest/skills.yaml). Installed via
 # each agent's own plugin CLI (`claude plugin ...` / `codex plugin ...`),
-# not the `skills` CLI, so scope is set by the optional `agents` field below
-# rather than manifest/skills.yaml's `only`/`agents`.
+# not the `skills` CLI, so scope is set by the `agents` field below rather
+# than manifest/skills.yaml's `only`/`agents`.
 #
-# packages[].agents: optional - which agents to install for, a list of
-#   `claude` and/or `codex`. Defaults to ["claude"] when omitted. An agent
+# packages[].agents: which agents to install for, a list of `claude` and/or
+#   `codex`. Always set it explicitly on every entry - plugins.sh still falls
+#   back to ["claude"] when it is omitted, but don't rely on that. An agent
 #   is only synced when it is also among the tools selected that run and
 #   its CLI is installed. Codex needs the repo to also ship a
 #   `.codex-plugin/` manifest (or be catalog-compatible).
@@ -30,7 +31,8 @@ packages:
   # Behavioral guidelines distilled from Andrej Karpathy's observations on
   # common LLM coding mistakes (think before coding, simplicity first,
   # surgical changes, goal-driven execution).
-  - marketplace_source: "multica-ai/andrej-karpathy-skills"
+  - agents: ["claude"]
+    marketplace_source: "multica-ai/andrej-karpathy-skills"
     marketplace: "karpathy-skills"
     plugin: "andrej-karpathy-skills"
     name: "Karpathy Guidelines"
@@ -40,7 +42,8 @@ packages:
   # Claude Code automations (hooks, skills, MCP servers, subagents, slash
   # commands). Read-only - suggests, doesn't modify anything.
   # https://claude.com/plugins/claude-code-setup
-  - marketplace_source: "anthropics/claude-plugins-official"
+  - agents: ["claude"]
+    marketplace_source: "anthropics/claude-plugins-official"
     marketplace: "claude-plugins-official"
     plugin: "claude-code-setup"
     name: "Automation Recommender"
@@ -50,7 +53,8 @@ packages:
   # lets Claude interact with web pages, take screenshots, fill forms,
   # click elements, and run automated browser testing workflows.
   # https://claude.com/plugins/playwright
-  - marketplace_source: "anthropics/claude-plugins-official"
+  - agents: ["claude"]
+    marketplace_source: "anthropics/claude-plugins-official"
     marketplace: "claude-plugins-official"
     plugin: "playwright"
     description: "Browser automation and E2E testing MCP server by Microsoft"
@@ -61,7 +65,8 @@ packages:
   # also offers "claude-mem-cowork" (cloud-session variant), not installed
   # here.
   # https://github.com/thedotmack/claude-mem
-  - marketplace_source: "thedotmack/claude-mem"
+  - agents: ["claude"]
+    marketplace_source: "thedotmack/claude-mem"
     marketplace: "thedotmack"
     plugin: "claude-mem"
     description: "Persistent memory/context compression across sessions"
@@ -70,7 +75,8 @@ packages:
   # reviews, slides, and data tables - a lighter-weight visual output path
   # than the artifact-publishing flow this repo doesn't otherwise touch.
   # https://github.com/nicobailon/visual-explainer
-  - marketplace_source: "nicobailon/visual-explainer"
+  - agents: ["claude"]
+    marketplace_source: "nicobailon/visual-explainer"
     marketplace: "visual-explainer-marketplace"
     plugin: "visual-explainer"
     description: "Generates HTML pages for diagrams, diff/plan reviews, and slides"
@@ -80,7 +86,8 @@ packages:
   # transcript, structured report. yt-dlp/ffmpeg install on first run via
   # brew; Whisper API key only needed for videos without captions.
   # https://github.com/taoufik123-collab/claude-watch
-  - marketplace_source: "taoufik123-collab/claude-watch"
+  - agents: ["claude"]
+    marketplace_source: "taoufik123-collab/claude-watch"
     marketplace: "claude-watch"
     plugin: "watch"
     name: "Watch"

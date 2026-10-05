@@ -115,12 +115,26 @@ passed to `--agent`, so adding a tool syncs just that tool. The `_uninstall`
 paths call `synced::drop`. `--resync` / `AI_ENV_SETUP_RESYNC=1` makes
 `synced::is_current` always fail. Cheap steps are deliberately not tracked.
 
-Migration: `synced::begin` (called in `bin/setup.sh` before any picker)
-creates the file empty when missing and, if a previous `selected-tools`
-exists, snapshots the previous `selected-*` files (the pickers overwrite
-them). Pairs in that snapshot (item previously selected AND tool previously
-selected; plugins only for claude) are recorded as synced on first check
-without calling a CLI. Items outside the snapshot sync normally.
+Migration (state machine in `synced::begin`, called in `bin/setup.sh`
+before any picker; seed = `~/.config/ai-env-setup/synced-seed/`): seed
+exists -> migration pending, reuse it as-is; no seed + `synced` exists ->
+done; neither + previous `selected-tools` exists -> snapshot the previous
+`selected-*` files into the seed (built in a temp dir, then renamed); neither
+and no `selected-tools` -> fresh machine, nothing seeded. `synced` is always
+created by `begin`, so an aborted fresh run isn't mistaken for a previous
+selection. Pairs in the seed (item previously selected AND tool previously
+selected; plugins only for claude) with no real record are recorded as
+synced on first check without calling a CLI; everything else syncs normally.
+Only `synced::end` (end of `main`, after the sync phase) removes the seed, so
+cancel/`die`/`set -e` mid-run leave it for the next run, and the first run's
+overwritten `selected-*` are never re-snapshotted. `synced::drop` also removes
+the item from a pending seed. `--resync` ignores the seed but still keeps it
+until the run completes.
+
+`codex mcp add` on an OAuth server runs the login flow and blocks until the
+browser authorization completes (output is captured, so it looks hung).
+Cancelling there skips every later MCP server - it is not a recording bug;
+`already exists` from claude/codex is already treated as success.
 
 ## Testing without the interactive picker
 

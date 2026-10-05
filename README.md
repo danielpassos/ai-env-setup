@@ -70,6 +70,13 @@ the manifest since your last run, sync normally. If you had edited an entry
 in the manifest between your last real run and that first run, use
 `--resync` once.
 
+That assumption is based on a snapshot of your previous selection kept in
+`~/.config/ai-env-setup/synced-seed/`. The snapshot is deleted only when a
+run completes, so if the first run is cancelled or fails part-way, the next
+run reuses the original snapshot (not the picks you made in the cancelled
+run) and still skips what was already installed. A completed `--resync`
+also finalizes it. A brand-new machine never creates a snapshot.
+
 To select everything instead of picking, set `AI_ENV_SETUP_ALL=1` - it
 bypasses every interactive picker (tools, skills, plugins, MCP) and selects
 all available options without needing `gum` installed. `AI_ENV_SETUP_TOOLS`

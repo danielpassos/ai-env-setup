@@ -109,28 +109,47 @@ picker::_removed() {
 
 # picker::select STATE_FILE PROMPT < "label:id" lines (one per option) on
 # stdin -> prints the chosen ids, one per line, and persists them to
-# STATE_FILE as next run's default hint. Shared by every interactive
-# multi-select in this repo (tools, and later skills/plugins/mcp).
+# STATE_FILE as next run's default. Shared by every interactive
+# multi-select in this repo (tools, skills, plugins, mcp).
+#
+# The previous selection (STATE_FILE) comes up already ticked, so you only
+# toggle what's new or changed and confirm. The full option list always
+# stays visible.
 #
 # Respects AI_ENV_SETUP_ALL as a non-interactive override: when set,
 # everything is selected without prompting (or requiring gum at all) -
 # consistent across every category, unlike a per-category flag/env var.
 #
-# The previous selection is shown as a text hint in the header rather than
-# pre-ticked via gum's --selected: in gum 2.0.0 an item preselected but left
-# untouched by the user silently drops out of the final output instead of
-# being returned, corrupting the result.
+# Preselection goes through gum's --selected, which matches the *displayed*
+# label, so gum is NOT given --label-delimiter (combined with it, a
+# preselected-but-untouched item silently vanishes from the output in some
+# gum versions, and --selected given an id never matches anything). Instead
+# gum returns the label text and it is mapped back to an id by exact match
+# against a label->id table built here. For that to be a safe 1:1 mapping:
+#   - the label is everything before the LAST ":" of each input line, so a
+#     colon inside a label can't truncate it;
+#   - "," is replaced by ";" in displayed labels (--selected splits on
+#     commas, so a comma in a label makes it impossible to preselect);
+#   - a label that collides with an earlier one gets " [id]" appended.
 picker::select() {
   local state_file="$1" prompt="$2"
 
-  local all_options=() all_ids=() line id
+  local all_ids=() all_labels=() line id label j
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
-    all_options+=("$line")
-    all_ids+=("${line##*:}")
+    id="${line##*:}"
+    label="${line%:*}"
+    label="${label//,/;}"
+    if [[ "${#all_labels[@]}" -gt 0 ]]; then
+      for j in "${all_labels[@]}"; do
+        [[ "$j" == "$label" ]] && label="$label [$id]" && break
+      done
+    fi
+    all_ids+=("$id")
+    all_labels+=("$label")
   done
 
-  if [[ "${#all_options[@]}" -eq 0 ]]; then
+  if [[ "${#all_ids[@]}" -eq 0 ]]; then
     log_warn "nothing to choose from"
     return 0
   fi
@@ -144,38 +163,32 @@ picker::select() {
 
   require_cmd gum
 
-  local previous=() previous_labels=()
-  while IFS= read -r line; do previous+=("$line"); done < <(picker::_previous_selection "$state_file")
-  if [[ "${#previous[@]}" -gt 0 ]]; then
-    for id in "${previous[@]}"; do
-      for line in "${all_options[@]}"; do
-        [[ "${line##*:}" == "$id" ]] && previous_labels+=("${line%%:*}")
-      done
+  # One --selected flag per previously-chosen id that still exists in the
+  # manifest (an id since removed from it has no row to tick).
+  local selected_args=() k
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    for ((k = 0; k < ${#all_ids[@]}; k++)); do
+      [[ "${all_ids[$k]}" == "$line" ]] && selected_args+=(--selected "${all_labels[$k]}")
     done
-  fi
+  done < <(picker::_previous_selection "$state_file")
 
   # gum's toggle key is 'x', not the space bar most checkbox UIs use - and
   # it's easy to miss that in the small footer hint, so spell it out.
   local header="$prompt (x to toggle, enter to confirm)"
-  if [[ "${#previous_labels[@]}" -gt 0 ]]; then
-    header+=" (previously: $(
-      IFS=,
-      echo "${previous_labels[*]}"
-    ))"
-  fi
 
-  local raw_ids=()
-  while IFS= read -r line; do raw_ids+=("$line"); done < <(gum choose --no-limit \
-    --header "$header" \
-    --label-delimiter=":" \
-    "${all_options[@]}")
+  local gum_args=(--no-limit --header "$header")
+  [[ "${#selected_args[@]}" -gt 0 ]] && gum_args+=("${selected_args[@]}")
 
-  # Defensive: only trust values gum returns that are actually known ids.
-  local chosen_ids=() i
-  if [[ "${#raw_ids[@]}" -gt 0 ]]; then
-    for id in "${raw_ids[@]}"; do
-      for i in "${all_ids[@]}"; do
-        [[ "$id" == "$i" ]] && chosen_ids+=("$id")
+  local raw=()
+  while IFS= read -r line; do raw+=("$line"); done < <(gum choose "${gum_args[@]}" "${all_labels[@]}")
+
+  # Defensive: only trust values gum returns that are exactly a known label.
+  local chosen_ids=()
+  if [[ "${#raw[@]}" -gt 0 ]]; then
+    for line in "${raw[@]}"; do
+      for ((k = 0; k < ${#all_ids[@]}; k++)); do
+        [[ "$line" == "${all_labels[$k]}" ]] && chosen_ids+=("${all_ids[$k]}")
       done
     done
   fi

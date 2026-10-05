@@ -21,55 +21,83 @@
 # the file for that run (everything syncs and is re-recorded).
 #
 # One-time migration (first run after this file was introduced): see
-# synced::begin.
+# synced::begin. It is driven by a durable seed directory, not by the
+# synced file's existence, so an aborted first run can't lose it.
 
 SYNCED_STATE_DIR="$HOME/.config/ai-env-setup"
 SYNCED_STATE_FILE="$SYNCED_STATE_DIR/synced"
 
-# Set by synced::begin only on the migration run: a temp dir holding a copy
-# of the selected-* files as they were BEFORE this run's pickers rewrote
-# them. Empty otherwise.
+# Durable migration snapshot. Its EXISTENCE means "migration pending": it is
+# created once (before any picker rewrites selected-*) and removed only by
+# synced::end, i.e. when a run gets through the whole sync phase. An aborted
+# run (Ctrl-C, die, set -e, crashed CLI) leaves it behind and the next run
+# reuses it instead of re-snapshotting the already-overwritten selected-*.
+SYNCED_SEED_PATH="$SYNCED_STATE_DIR/synced-seed"
+
+# Set by synced::begin to SYNCED_SEED_PATH while migration is pending, else
+# empty. synced::_seeded reads the snapshot from here.
 SYNCED_SEED_DIR=""
 
 # synced::begin - call once from setup.sh, before any picker runs.
 #
-# If the synced file doesn't exist yet but a previous run's selected-tools
-# file does, snapshot the previous selection files and treat each
-# (category, item, tool) pair the previous run would have synced as already
-# synced ("assumed synced": recorded with the CURRENT manifest hash the
-# first time it's checked, no CLI call). Anything not in that snapshot -
-# items added to the manifest since, items you newly tick, tools you newly
-# add, and codex for plugins (plugins used to be claude-only) - syncs
-# normally. Limits: an entry that was edited in the manifest between the
-# last real run and this one is assumed synced too (use --resync once to
-# force it). The synced file is created empty here so the migration happens
-# exactly once even if every sync this run fails.
+# State machine (seed = $SYNCED_SEED_PATH, synced = $SYNCED_STATE_FILE):
+#
+#   seed exists                  -> migration pending (a prior run aborted):
+#                                   reuse the seed as-is, whatever the synced
+#                                   file holds.
+#   no seed, synced exists       -> migration done (or never needed): nothing.
+#   no seed, no synced, previous -> start migration: snapshot the previous
+#   selected-tools exists           selected-* files into the seed.
+#   neither, no selected-tools   -> fresh machine: nothing is seeded.
+#
+# The synced file is always created here (after the seed, when there is one),
+# so it also marks "fresh machine run already started": otherwise an aborted
+# fresh run would leave selected-* behind and the next run would mistake the
+# fresh run's picks for a previous, already-installed selection.
+#
+# While the seed exists, every (category, item, tool) pair of the previous
+# selection (item AND tool were selected, plugins only for claude) that has
+# no real record yet is treated as "assumed synced": recorded with the
+# CURRENT manifest hash the first time it's checked, no CLI call. Anything
+# else - items added since, items newly ticked (even in an aborted run), tools
+# newly added, codex for plugins (plugins used to be claude-only) - syncs
+# normally. Limits: an entry edited in the manifest between the last real run
+# and the migration is assumed synced too (use --resync once to force it).
+# --resync ignores the seed for that run but still snapshots/keeps it, so a
+# resync that completes finalizes the migration and one that aborts doesn't
+# lose it.
 synced::begin() {
   SYNCED_SEED_DIR=""
-  [[ -f "$SYNCED_STATE_FILE" ]] && return 0
-
   mkdir -p "$SYNCED_STATE_DIR"
 
-  if [[ -z "${AI_ENV_SETUP_RESYNC:-}" && -f "$SYNCED_STATE_DIR/selected-tools" ]]; then
-    SYNCED_SEED_DIR="$(mktemp -d)"
-    local f
+  if [[ -d "$SYNCED_SEED_PATH" ]]; then
+    log_info "resuming interrupted first run: previous selection still assumed synced (--resync to redo)"
+  elif [[ ! -f "$SYNCED_STATE_FILE" && -f "$SYNCED_STATE_DIR/selected-tools" ]]; then
+    # Build in a temp dir, then rename, so an interrupt can't leave a
+    # half-copied seed that a later run would trust.
+    local tmp f
+    tmp="$(mktemp -d "$SYNCED_STATE_DIR/.synced-seed.XXXXXX")"
     for f in selected-tools selected-skills selected-plugins selected-mcp; do
       if [[ -f "$SYNCED_STATE_DIR/$f" ]]; then
-        cp "$SYNCED_STATE_DIR/$f" "$SYNCED_SEED_DIR/$f"
+        cp "$SYNCED_STATE_DIR/$f" "$tmp/$f"
       fi
     done
+    mv "$tmp" "$SYNCED_SEED_PATH"
     log_info "no sync records yet: assuming your previous selection is already synced (--resync to redo)"
   fi
 
-  : >"$SYNCED_STATE_FILE"
+  [[ -d "$SYNCED_SEED_PATH" ]] && SYNCED_SEED_DIR="$SYNCED_SEED_PATH"
+  [[ -f "$SYNCED_STATE_FILE" ]] || : >"$SYNCED_STATE_FILE"
+  return 0
 }
 
-# synced::end - call once at the end of setup.sh; cleans up the seed snapshot.
+# synced::end - call once, only after the sync phase ran to completion:
+# finalizes the migration by deleting the seed. (Individual sync failures
+# don't abort the run and are never recorded, so they retry next run anyway.)
 synced::end() {
-  if [[ -n "$SYNCED_SEED_DIR" ]]; then
-    rm -rf "$SYNCED_SEED_DIR"
-  fi
+  rm -rf "$SYNCED_SEED_PATH"
   SYNCED_SEED_DIR=""
+  [[ -f "$SYNCED_STATE_FILE" ]] || : >"$SYNCED_STATE_FILE"
   return 0
 }
 
@@ -159,4 +187,13 @@ synced::record() {
 # deselected/uninstalled), so ticking it again later syncs it afresh.
 synced::drop() {
   synced::_remove "$1" "$2"
+
+  # Also forget it in a pending seed, so re-ticking an item that was just
+  # uninstalled (in an aborted run) isn't assumed to still be installed.
+  local sel="$SYNCED_SEED_PATH/selected-$1" tmp
+  if [[ -f "$sel" ]]; then
+    tmp="$(mktemp)"
+    grep -Fxv -- "$2" "$sel" >"$tmp" || true
+    mv "$tmp" "$sel"
+  fi
 }

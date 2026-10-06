@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="ai-env-setup: one command, identical AI tooling on every Mac" width="100%">
+</p>
+
 # ai-env-setup
 
 Keeps my AI tooling installed and configured identically across my Macs.

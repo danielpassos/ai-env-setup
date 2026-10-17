@@ -136,6 +136,17 @@ packages:
     name: "Compose + Kotlin (Chris Banes)"
     description: "Compose state/performance/testing and Kotlin coroutines/API design"
 
+  # Kotlin's backend and tooling skills: JPA entity mapping, Java-to-Kotlin
+  # conversion, native build performance, and migrations (AGP 9,
+  # CocoaPods to SwiftPM, immutable collections). Adds framework-specific
+  # and migration guidance alongside chrisbanes/skills' Kotlin API,
+  # coroutine, and Gradle guidance; tooling topics may overlap.
+  # Install the full package through its documented `skills add` route;
+  # no only/agents restriction, so it follows the tools selected this run.
+  - source: "Kotlin/kotlin-agent-skills"
+    name: "Kotlin Agent Skills"
+    description: "Kotlin backend development and tooling skills"
+
   # skydoves: 25 skills focused specifically on Jetpack Compose performance -
   # recomposition, stability inference, LazyColumn/prefetch tuning,
   # Modifier.Node migration, baseline profiles, R8/release-mode measurement,

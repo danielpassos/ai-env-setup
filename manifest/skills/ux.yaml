@@ -1,0 +1,10 @@
+# External skill packages: ux. See README.md for the shared schema.
+
+packages:
+  # Nielsen's 10 heuristics and Krug's "Don't Make Me Think" provide
+  # severity-rated interface reviews for everyday UX work.
+  - source: "wondelai/skills"
+    name: "Software Design + UX"
+    description: "Clean code/architecture, DDD, system design, usability heuristics"
+    skills:
+      - ux-heuristics

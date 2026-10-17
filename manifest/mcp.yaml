@@ -7,7 +7,7 @@
 # servers[].url: the server's remote HTTP endpoint.
 # servers[].description: optional - one-line description shown next to the
 #   id in the picker (ids here are already short/friendly, unlike
-#   manifest/skills.yaml's raw sources, so there's no separate `name`
+#   manifest/skills/*.yaml's raw sources, so there's no separate `name`
 #   field - just this).
 # servers[].only: optional - only configure for these tool ids (this repo's
 #   ids from manifest/tools.yaml), regardless of which tools were selected

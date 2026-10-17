@@ -13,7 +13,7 @@
 #   at target instead of symlinking (used for rules/ -> Codex's single
 #   global AGENTS.md, which has no directory-of-topics equivalent). Mutually
 #   exclusive with expand.
-# skills_agent: this tool's agent id in the `skills` CLI (manifest/skills.yaml's
+# skills_agent: this tool's agent id in the `skills` CLI (manifest/skills/*.yaml's
 #   `only` field), if different from this tool's own id. Omit when they match.
 
 tools:

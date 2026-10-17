@@ -46,7 +46,7 @@ This clones the repo to `~/.ai-env-setup` and runs `bin/setup.sh`, which:
 3. for each selected tool: installs its CLI (npm or brew, per
    `manifest/tools.yaml`) and symlinks its declared config/skills into its
    home directory
-4. installs the skill packages listed in `manifest/skills.yaml`, via
+4. installs the skill packages listed in `manifest/skills/*.yaml`, via
    `npx skills add`
 5. installs the plugins listed in `manifest/plugins.yaml`, via each agent's
    `plugin marketplace add` + install command (Claude Code by default,
@@ -239,7 +239,7 @@ etc.) does **not** belong in `rules/` - keep that in the project's own
 
 Someone else's published skill package (e.g. `vercel-labs/agent-skills`) is
 different from a skill you author yourself - add it to
-`manifest/skills.yaml` instead of the `skills/` directory:
+`manifest/skills/*.yaml` instead of the `skills/` directory:
 
 ```yaml
 packages:
@@ -247,6 +247,18 @@ packages:
     # skills: ["vercel-optimize"]  # optional - install only these skill(s)
     # only: ["claude"]              # optional - install only for these tools (this repo's ids)
 ```
+
+Use the category that best fits the package: `android.yaml`, `kotlin.yaml`,
+`web.yaml`, `engineering.yaml`, `ux.yaml`, `workflows.yaml`, `writing.yaml`,
+or `discovery.yaml`. Category files organize the manifest; the picker still
+shows individual packages. Files load in alphabetical order. Each file uses
+`packages:` with the same schema shown above.
+
+A package may span categories when each entry declares an explicit `skills`
+subset and all other fields match. These subsets combine into one picker
+option and one sync operation, identified by `source`. Conflicting entries
+or repeated unrestricted packages are rejected. Keep skill names in just
+one category to make their ownership clear.
 
 This runs `npx skills add <source> --global --yes [--skill ...] [--agent ...]`
 for every entry on each `ai-env-setup` run - see https://skills.sh. `only`
@@ -298,7 +310,7 @@ servers:
 ```
 
 Only hosted HTTP endpoints are supported - there's no schema here for a
-local/stdio server. `only` works like `manifest/skills.yaml`'s: omit it and
+local/stdio server. `only` works like `manifest/skills/*.yaml`'s: omit it and
 the server is configured for whichever tools you selected this run instead
 of every tool.
 
@@ -365,7 +377,7 @@ not part of this - they're already universal, and live in
 Brewfile                    # ai-env-setup's own deps: yq, gum (not the AI tools themselves)
 manifest/
   tools.yaml                 # the registry: every AI tool ai-env-setup knows about
-  skills.yaml                 # skill packages pulled in via `npx skills add`
+  skills/                     # categorized packages pulled in via `npx skills add`
   plugins.yaml                 # Claude Code / Codex plugins pulled in via each CLI's `plugin` command
   mcp.yaml                     # remote MCP servers configured per-tool
 skills/<name>/               # my own skills, shared - any tool's manifest entry can link them in
@@ -379,7 +391,7 @@ bin/
     tools.sh                     # reads manifest/tools.yaml, drives the tool selector
     install.sh                    # installs a selected tool's CLI (npm / brew_cask / brew_formula)
     links.sh                      # symlinks a selected tool's declared links into its home dir
-    skills.sh                      # installs manifest/skills.yaml via `npx skills add`
+    skills.sh                      # installs manifest/skills/*.yaml via `npx skills add`
     plugins.sh                      # installs manifest/plugins.yaml via `claude`/`codex plugin`
     mcp.sh                           # configures manifest/mcp.yaml per-tool
 install.sh                    # curl-pipeable bootstrap (clone + hand off to setup.sh)

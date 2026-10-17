@@ -1,19 +1,63 @@
 #!/usr/bin/env bash
 # Installs external skill packages (via `npx skills add`, https://skills.sh)
-# listed in manifest/skills.yaml. A package's declared `only` (this repo's
+# listed in manifest/skills/*.yaml. A package's declared `only` (this repo's
 # tool ids) or `agents` (the CLI's own agent ids) list takes precedence when
 # set; otherwise it defaults to whichever tools were selected in this run,
 # so a bare package entry never reaches past the tools ai-env-setup actually
 # manages into every agent the `skills` CLI happens to know about.
 
-SKILLS_MANIFEST="$AI_ENV_SETUP_HOME/manifest/skills.yaml"
+SKILLS_MANIFEST_DIR="$AI_ENV_SETUP_HOME/manifest/skills"
 SKILLS_STATE_FILE="$HOME/.config/ai-env-setup/selected-skills"
 
-readonly SKILLS_MANIFEST SKILLS_STATE_FILE
+readonly SKILLS_MANIFEST_DIR SKILLS_STATE_FILE
+
+# Combine category files once per operation. Source identities and entry hashes
+# do not depend on the category filename. Fail before selection or sync on
+# invalid YAML or conflicting package fragments.
+skills::_load_manifest() {
+  local LC_ALL=C file data duplicates source group metadata missing
+  local files=()
+  for file in "$SKILLS_MANIFEST_DIR"/*.yaml; do
+    [[ -f "$file" ]] && files+=("$file")
+  done
+  if [[ "${#files[@]}" -eq 0 ]]; then
+    printf '{"packages":[]}\n'
+    return 0
+  fi
+  data="$(yq ea -o=json -I=0 '[.packages[]] | {"packages": .}' "${files[@]}")" || return 1
+  duplicates="$(yq e '.packages | group_by(.source) | .[] | select(length > 1) | .[0].source' <<<"$data")" || return 1
+  while IFS= read -r source; do
+    [[ -n "$source" ]] || continue
+    group="$(SKILL_SOURCE="$source" yq e -o=json -I=0 '[.packages[] | select(.source == strenv(SKILL_SOURCE))]' <<<"$data")" || return 1
+    missing="$(yq e '[.[] | select((.skills | tag) != "!!seq")] | length' <<<"$group")" || return 1
+    metadata="$(yq e '[.[] | del(.skills)] | unique | length' <<<"$group")" || return 1
+    if [[ "$missing" -ne 0 || "$metadata" -ne 1 ]]; then
+      printf 'duplicate skill package sources with conflicting metadata or unrestricted skills: %s\n' "$source" >&2
+      return 1
+    fi
+  done <<<"$duplicates"
+  # Only compatible explicit subsets may share a source. Preserve the first
+  # entry's metadata and combine skill names in category-file order.
+  data="$(yq e -o=json -I=0 '
+    .packages as $packages |
+    .packages = ([$packages[].source] | unique |
+      map(. as $source | [$packages[] | select(.source == $source)]) |
+      map([
+        (select(length == 1) | .[0]),
+        (select(length > 1) | . as $group | .[0] |
+          .skills = ([$group[].skills[]] | unique))
+      ] | .[]))
+  ' <<<"$data")" || return 1
+  printf '%s\n' "$data"
+}
+
+skills::_query() {
+  yq e "$1" - <<<"$SKILLS_MANIFEST_DATA"
+}
 
 skills::_read_list() {
   local index="$1" field="$2"
-  yq e ".packages[$index].${field} // [] | .[]" "$SKILLS_MANIFEST" 2>/dev/null
+  skills::_query ".packages[$index].${field} // [] | .[]"
 }
 
 # skills::_uninstall SOURCE - removes every currently-installed skill that
@@ -73,12 +117,11 @@ skills::_uninstall() {
 # skills::sync reads this same state file to know what to actually sync, so
 # this must run before it in the same invocation (see bin/setup.sh).
 skills::select() {
-  if [[ ! -f "$SKILLS_MANIFEST" ]]; then
-    return 0
-  fi
+  local SKILLS_MANIFEST_DATA
+  SKILLS_MANIFEST_DATA="$(skills::_load_manifest)" || return 1
 
   local count
-  count="$(yq e '.packages | length' "$SKILLS_MANIFEST")"
+  count="$(skills::_query '.packages | length')"
 
   if [[ -z "$count" || "$count" -eq 0 ]]; then
     return 0
@@ -86,12 +129,12 @@ skills::select() {
 
   local i source name description label all_options=()
   for ((i = 0; i < count; i++)); do
-    source="$(yq e ".packages[$i].source" "$SKILLS_MANIFEST")"
+    source="$(skills::_query ".packages[$i].source")"
 
-    name="$(yq e ".packages[$i].name" "$SKILLS_MANIFEST")"
+    name="$(skills::_query ".packages[$i].name")"
     [[ "$name" == "null" ]] && name="$source"
 
-    description="$(yq e ".packages[$i].description" "$SKILLS_MANIFEST")"
+    description="$(skills::_query ".packages[$i].description")"
     label="$name"
     [[ "$description" != "null" ]] && label="$name — $description"
 
@@ -145,13 +188,11 @@ skills::_is_selected() {
 skills::sync() {
   local selected_ids=("$@")
 
-  if [[ ! -f "$SKILLS_MANIFEST" ]]; then
-    log_info "no skills manifest, skipping"
-    return 0
-  fi
+  local SKILLS_MANIFEST_DATA
+  SKILLS_MANIFEST_DATA="$(skills::_load_manifest)" || return 1
 
   local count
-  count="$(yq e '.packages | length' "$SKILLS_MANIFEST")"
+  count="$(skills::_query '.packages | length')"
 
   if [[ -z "$count" || "$count" -eq 0 ]]; then
     log_info "no skill packages declared, skipping"
@@ -171,7 +212,7 @@ skills::sync() {
   local i source line skills_list only_list agents_list tool_id args
   local agent dup entry_hash pending_agents
   for ((i = 0; i < count; i++)); do
-    source="$(yq e ".packages[$i].source" "$SKILLS_MANIFEST")"
+    source="$(skills::_query ".packages[$i].source")"
 
     if ! skills::_is_selected "$source"; then
       log_info "not selected, skipping: $source"
@@ -210,7 +251,7 @@ skills::sync() {
     # up-to-date record go into this run's `skills add` call, so a new
     # package, an edited entry, or a newly added tool syncs just what's
     # missing. Dedupe agents too (two tool ids could share one agent).
-    entry_hash="$(synced::hash_entry "$SKILLS_MANIFEST" ".packages[$i]")"
+    entry_hash="$(synced::hash_entry - ".packages[$i]" <<<"$SKILLS_MANIFEST_DATA")"
     pending_agents=()
     for agent in "${agents_list[@]}"; do
       if [[ "${#pending_agents[@]}" -gt 0 ]]; then

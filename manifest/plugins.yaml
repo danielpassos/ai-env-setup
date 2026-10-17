@@ -1,8 +1,8 @@
 # Plugins - packages only ever published as a plugin marketplace, with no
-# generic `skills add` equivalent (see manifest/skills.yaml). Installed via
+# generic `skills add` equivalent (see manifest/skills/*.yaml). Installed via
 # each agent's own plugin CLI (`claude plugin ...` / `codex plugin ...`),
 # not the `skills` CLI, so scope is set by the `agents` field below rather
-# than manifest/skills.yaml's `only`/`agents`.
+# than manifest/skills/*.yaml's `only`/`agents`.
 #
 # packages[].agents: which agents to install for, a list of `claude` and/or
 #   `codex`. Always set it explicitly on every entry - plugins.sh still falls
@@ -22,7 +22,7 @@
 #   (or `codex plugin add <plugin>@<marketplace>`).
 # packages[].name: optional - short friendly label shown in the picker.
 #   Falls back to the bare `plugin` name when omitted (already fairly
-#   readable for most of these, unlike manifest/skills.yaml's raw
+#   readable for most of these, unlike manifest/skills/*.yaml's raw
 #   "owner/repo" sources).
 # packages[].description: optional - one-line description shown next to
 #   `name` in the picker.

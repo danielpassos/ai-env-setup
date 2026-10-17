@@ -15,7 +15,7 @@ session. This repo's whole point is reproducing an identical setup on a
 fresh machine via `bin/setup.sh` - if a skill only shows up because it
 happens to be preinstalled on the machine you're currently running on (e.g.
 a Claude Code plugin pulled from `~/.claude/plugins/cache/...` via
-`/plugin marketplace`, not this repo's `manifest/skills.yaml`), it will NOT
+`/plugin marketplace`, not this repo's `manifest/skills/*.yaml`), it will NOT
 exist after a clean install and isn't a real recommendation for this repo -
 say so explicitly rather than presenting it as available.
 
@@ -24,12 +24,12 @@ manages** (Claude Code, Codex, Cursor, and whichever "universal" agents are
 selected - see `manifest/tools.yaml`), not just Claude Code. A package only
 installable as a plugin, or scoped with `only`/`agents` to a single tool,
 is a narrower recommendation than one that installs cleanly via
-`manifest/skills.yaml` for whatever tools the user selects - flag that
+`manifest/skills/*.yaml` for whatever tools the user selects - flag that
 narrowing instead of glossing over it.
 
 ## Documenting external skill packages
 
-When adding an external skill package to `manifest/skills.yaml`, include a
+When adding an external skill package to `manifest/skills/*.yaml`, include a
 comment beside its entry explaining what it covers, why it is included,
 and how it complements or overlaps with existing packages. Document any
 skill subset selected and any installation requirements or agent
@@ -75,7 +75,7 @@ duplicating a package catalog in `AGENTS.md`.
     development; `expect` alone tended to hang.
 
 - **The `skills` CLI** (`npx skills add`, https://skills.sh, driven by
-  `bin/lib/skills.sh` from `manifest/skills.yaml`) treats agents in two
+  `bin/lib/skills.sh` from `manifest/skills/*.yaml`) treats agents in two
   groups: "universal" agents (Codex, Gemini CLI, Antigravity, etc.) read
   skills directly from a shared store at `~/.agents/skills/<name>`; a
   smaller set (Claude Code, Junie, Pi) get a full **copy** placed into their
@@ -84,7 +84,7 @@ duplicating a package catalog in `AGENTS.md`.
   OS symlinks under `~/.claude/skills/` or `~/.codex/skills/` are this
   repo's own hand-authored skills (`skills/`), linked in by
   `bin/lib/links.sh` via `manifest/tools.yaml`.
-  - If a `manifest/skills.yaml` package omits `only`/`agents`,
+  - If a `manifest/skills/*.yaml` package omits `only`/`agents`,
     `bin/lib/skills.sh` scopes the install to whichever tools were selected
     *in that run* - never to every agent the `skills` CLI happens to know
     about (~77 on a well-used machine). This was itself a bug fix; don't

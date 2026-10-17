@@ -254,6 +254,20 @@ or `discovery.yaml`. Category files organize the manifest; the picker still
 shows individual packages. Files load in alphabetical order. Each file uses
 `packages:` with the same schema shown above.
 
+Each package supports these fields:
+
+| Field | Meaning |
+|---|---|
+| `source` | Required GitHub `owner/repo` or full repository URL. |
+| `name` | Optional picker label; defaults to `source`. |
+| `description` | Optional one-line text shown beside the picker label. |
+| `skills` | Optional list of skill names; omit to install the full package. |
+| `only` | Optional tool IDs from `manifest/tools.yaml`; overrides `agents`. |
+| `agents` | Optional agent IDs understood by the skills CLI. |
+
+Without `only` or `agents`, installation follows the tools selected in the
+current run.
+
 A package may span categories when each entry declares an explicit `skills`
 subset and all other fields match. These subsets combine into one picker
 option and one sync operation, identified by `source`. Conflicting entries

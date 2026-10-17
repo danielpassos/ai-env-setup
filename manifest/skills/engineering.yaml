@@ -1,24 +1,12 @@
-# External skill packages: engineering. See README.md for the shared schema.
+# External skill packages. See README.md for the shared schema.
 
 packages:
-  # wondelai: book-distillation skills, mostly product/business/marketing
-  # (storybrand-messaging, negotiation, traction-eos...) out of scope here.
-  # Picked only the software-engineering-general ones from this package:
-  #   - clean-code / clean-architecture / refactoring-patterns: Robert
-  #     Martin's code-quality and architecture principles
-  #   - domain-driven-design: Evans' DDD - bounded contexts, aggregates,
-  #     ubiquitous language
-  #   - ddia-systems: Kleppmann's "Designing Data-Intensive Applications" -
-  #     distributed systems tradeoffs
-  #   - system-design: general system-design interview/practice patterns
-  #   - team-topologies: Skelton & Pais - team structure and interaction
-  #     modes for fast flow
-  #   - working-with-legacy-code: Feathers' techniques for safely changing
-  #     code without tests
-  #   - pragmatic-programmer: Hunt & Thomas's general craftsmanship
-  #     practices
+  # Book-based software engineering guidance for code quality, architecture,
+  # domain modeling, distributed systems, team organization, and safe changes
+  # to legacy code. The selection focuses on engineering practice; the
+  # package's business and marketing material is excluded.
   - source: "wondelai/skills"
-    name: "Software Design + UX"
+    name: "Software Design"
     description: "Clean code/architecture, DDD, system design, usability heuristics"
     skills:
       - clean-code

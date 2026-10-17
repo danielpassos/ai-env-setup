@@ -1,15 +1,10 @@
-# External skill packages: web. See README.md for the shared schema.
+# External skill packages. See README.md for the shared schema.
 
 packages:
-  # Only "web-design-engineer" - the one skill in this repo relevant to
-  # building websites: polished HTML/CSS/JS/React pages, dashboards,
-  # prototypes, and design systems, judged against a "stunning, not just
-  # functional" bar. Pure prompt-based skill, no external CLI/service
-  # dependency (unlike superdesigndev/superdesign-skill, which drives its
-  # own @superdesign/cli and a hosted canvas/model-routing service - a
-  # bigger commitment, deliberately not picked here). The other 4 skills in
-  # this repo (beautiful-article, gpt-image-2, kb-retriever,
-  # web-video-presentation) are unrelated to website creation.
+  # Visual front-end guidance for building polished pages, dashboards,
+  # prototypes, and design systems with HTML/CSS/JavaScript or React.
+  # Uses prompt-based instructions without requiring an external design CLI
+  # or a hosted design service.
   - source: "ConardLi/garden-skills"
     name: "Web Design Engineer"
     description: "Build polished HTML/CSS/JS/React pages, dashboards, and design systems"

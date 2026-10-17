@@ -1,13 +1,11 @@
-# External skill packages: kotlin. See README.md for the shared schema.
+# External skill packages. See README.md for the shared schema.
 
 packages:
-  # Kotlin's backend and tooling skills: JPA entity mapping, Java-to-Kotlin
-  # conversion, native build performance, and migrations (AGP 9,
-  # CocoaPods to SwiftPM, immutable collections). Adds framework-specific
-  # and migration guidance alongside chrisbanes/skills' Kotlin API,
-  # coroutine, and Gradle guidance; tooling topics may overlap.
-  # Install the full package through its documented `skills add` route;
-  # no only/agents restriction, so it follows the tools selected this run.
+  # Kotlin backend and tooling guidance covering JPA entity mapping,
+  # Java-to-Kotlin conversion, and native build performance. Migration
+  # workflows cover AGP 9, CocoaPods to SwiftPM, and immutable collections.
+  # Useful across backend, Android, and multiplatform projects, depending
+  # on the task; individual migration workflows have their own scope.
   - source: "Kotlin/kotlin-agent-skills"
     name: "Kotlin Agent Skills"
     description: "Kotlin backend development and tooling skills"

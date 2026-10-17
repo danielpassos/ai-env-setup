@@ -1,25 +1,25 @@
-# External skill packages: android. See README.md for the shared schema.
+# External skill packages. See README.md for the shared schema.
 
 packages:
   # Material Design 3 (Material You): components, design tokens, theming,
-  # responsive layout, and MD3 compliance audits. Primarily Jetpack Compose
-  # Material3, also Flutter and (maintenance-mode) web.
+  # responsive layout, and design compliance reviews. Primarily targets
+  # Jetpack Compose Material3, with Flutter and maintenance-mode web coverage.
   - source: "hamen/material-3-skill"
     name: "Material 3"
     description: "MD3 components, theming, and compliance audits (Compose/Flutter/web)"
 
-  # Chris Banes (Jetpack Compose/Accompanist, Google): Compose (state/effects,
-  # performance, component design, animations, testing) and Kotlin
-  # (coroutines/flow, control flow, API design) plus Gradle workflows.
+  # Compose guidance covering state ownership, effects, reusable component
+  # APIs, animations, testing, and performance. Also covers Kotlin coroutine
+  # and Flow usage, control flow, API design, and Gradle workflows.
   - source: "chrisbanes/skills"
     name: "Compose + Kotlin (Chris Banes)"
     description: "Compose state/performance/testing and Kotlin coroutines/API design"
 
-  # Official Android guidance selected for everyday phone/tablet development.
-  # Use the shared skills CLI rather than the upstream Android CLI/plugin route.
-  # No only/agents restriction: follows the tools selected in this run.
-  # Some workflows need Android SDK/device tools or the Android CLI; these
-  # skill instructions do not provision that tooling through this setup.
+  # Official Android guidance selected for everyday phone/tablet development,
+  # with task-specific workflows for implementing features, migrating existing
+  # apps, and investigating platform issues.
+  # Some workflows require Android SDK/device tools or the Android CLI;
+  # those tools need to be installed separately from this skill package.
   - source: "android/skills"
     name: "Android Skills"
     description: "Official Android platform, Jetpack, migration, and tooling workflows"
@@ -41,12 +41,10 @@ packages:
       - camerax
       - media3-cast-integration
 
-  # skydoves: 25 skills focused specifically on Jetpack Compose performance -
-  # recomposition, stability inference, LazyColumn/prefetch tuning,
-  # Modifier.Node migration, baseline profiles, R8/release-mode measurement,
-  # and Compose HotSwan. Complements chrisbanes/skills rather than
-  # duplicating it. README documents a manual git-clone install, but the
-  # repo is plain SKILL.md files and `skills add` discovers all 25 fine.
+  # Detailed Compose performance diagnosis: recomposition, stability inference,
+  # lazy-layout tuning, custom modifiers, and baseline profiles. Includes
+  # release-mode measurement and Compose HotSwan hot reload workflows;
+  # HotSwan requires separate IDE and project configuration.
   - source: "skydoves/compose-performance-skills"
     name: "Compose Performance"
     description: "Jetpack Compose recomposition, stability, and prefetch tuning"

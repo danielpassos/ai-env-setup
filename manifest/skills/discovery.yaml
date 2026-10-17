@@ -1,36 +1,9 @@
-# External skill packages installed via the `skills` CLI (npx skills add).
-# https://skills.sh
-#
-# Distinct from the root skills/ dir: that's skills you author yourself and
-# link in via manifest/tools.yaml. This is for pulling in someone else's
-# published skill package wholesale.
-#
-# packages[].source: a GitHub owner/repo (or full URL), same as `skills add <package>`
-# packages[].name: optional - short friendly label shown in the picker
-#   instead of the raw `source` (which is easy to forget the point of
-#   months later, e.g. "skydoves/compose-performance-skills"). Falls back
-#   to `source` when omitted.
-# packages[].description: optional - one-line description shown next to
-#   `name` in the picker.
-# packages[].skills: optional - only install these skill names from the
-#   package (omit to install everything it offers)
-# packages[].only: optional - only install for these tool ids, using this
-#   repo's own ids from manifest/tools.yaml (e.g. "claude", "codex", "cursor"),
-#   regardless of which tools were selected in this run. Each id is
-#   translated to that tool's skills_agent before being passed to the CLI.
-#   Omit this (the normal case) and the package installs for whichever tools
-#   you selected in this run instead - never for every agent the `skills`
-#   CLI happens to know about.
-# packages[].agents: optional - same idea as `only`, but takes the `skills`
-#   CLI's own agent ids directly (they don't always match this repo's tool
-#   ids - notably "claude-code", not "claude"). Only useful for agents this
-#   repo doesn't otherwise manage. If both are set, `only` wins.
+# External skill packages. See README.md for the shared schema.
 
 packages:
-  # Only "find-skills" - teaches the agent to search/install other skills
-  # via the `npx skills` CLI when asked "is there a skill for X". Note this
-  # is a different repo from vercel-labs/agent-skills (which has no
-  # find-skills of its own).
+  # Teaches agents to find and install additional skills through the skills
+  # CLI when asked whether a skill exists for a task. Enables discovery beyond
+  # the packages selected in this manifest.
   - source: "vercel-labs/skills"
     name: "Find Skills"
     description: "Search and install other skills via the `skills` CLI"

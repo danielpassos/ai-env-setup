@@ -1,19 +1,16 @@
-# External skill packages: writing. See README.md for the shared schema.
+# External skill packages. See README.md for the shared schema.
 
 packages:
-  # Rewrites AI-sounding prose (stock phrasing, filler, passive voice, etc.)
-  # to read naturally without changing what it says.
+  # Rewrites AI-sounding prose while preserving its meaning. Addresses stock
+  # phrasing, filler, inflated claims, and repetitive sentence patterns.
   - source: "blader/humanizer"
     name: "Humanizer"
     description: "Rewrite AI-sounding prose to read naturally"
 
-  # Reshapes replies to lead with the answer/next action, numbered steps,
-  # capped lists, no preamble/recaps - opt-in per session via /i-have-adhd
-  # (disable-model-invocation: true, so it never auto-fires). Repo also
-  # ships a Claude-Code-only plugin with an always-on SessionStart hook -
-  # not picked here, same reasoning as obra/superpowers above: the plain
-  # `skills add` route works for every tool this manifest manages, the
-  # plugin route only for Claude Code.
+  # Formats replies around the answer or next action, with numbered steps,
+  # capped lists, and less preamble. Opt-in per session via /i-have-adhd;
+  # the skill disables automatic model invocation. The separate plugin with
+  # an always-on session hook is not installed through this manifest.
   - source: "ayghri/i-have-adhd"
     name: "I Have ADHD"
     description: "ADHD-friendly output style - answer-first, numbered, no preamble"

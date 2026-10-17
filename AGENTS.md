@@ -27,6 +27,18 @@ is a narrower recommendation than one that installs cleanly via
 `manifest/skills.yaml` for whatever tools the user selects - flag that
 narrowing instead of glossing over it.
 
+## Documenting external skill packages
+
+When adding an external skill package to `manifest/skills.yaml`, include a
+comment beside its entry explaining what it covers, why it is included,
+and how it complements or overlaps with existing packages. Document any
+skill subset selected and any installation requirements or agent
+restrictions. Verify these details against the upstream package.
+
+Keep related packages together. Use `name` and `description` for concise
+picker labels; keep the fuller rationale in manifest comments rather than
+duplicating a package catalog in `AGENTS.md`.
+
 ## Non-obvious gotchas (hard-won this repo's history)
 
 - **macOS's `/bin/bash` is 3.2**, not 4+ (Apple won't ship GPLv3). Under

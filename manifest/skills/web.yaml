@@ -9,3 +9,25 @@ packages:
     name: "Web Design Engineer"
     description: "Build polished HTML/CSS/JS/React pages, dashboards, and design systems"
     skills: ["web-design-engineer"]
+
+  # Opinionated visual design for new pages, audits, redesigns, and extracting
+  # design references. Complements Web Design Engineer with structural variety
+  # and checks for generic AI aesthetics, but overlaps in page creation.
+  # Installs only the hallmark skill and its references via the skills CLI;
+  # no plugin or hosted service is required. Leave agent scope unset so it
+  # follows the tools selected during setup.
+  - source: "nutlope/hallmark"
+    name: "Hallmark"
+    description: "Distinctive web design, visual audits, redesigns, and reference studies"
+    skills: ["hallmark"]
+
+  # Editorial architecture, flow, sequence, and data diagrams as HTML + SVG.
+  # Complements the page-focused design skills above; overlaps with Visual
+  # Explainer's diagrams, but installs across selected agents via skills CLI.
+  # Select only diagram-design, including its references, assets, and scripts;
+  # native plugin slash commands are not included. Basic HTML needs no build
+  # step; default fonts load from Google Fonts (system fonts work offline).
+  - source: "cathrynlavery/diagram-design"
+    name: "Diagram Design"
+    description: "Editorial HTML/SVG diagrams for architecture, flows, and data"
+    skills: ["diagram-design"]

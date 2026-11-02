@@ -18,3 +18,18 @@ packages:
       - team-topologies
       - working-with-legacy-code
       - pragmatic-programmer
+
+  # Multi-phase security audit of a codebase: reconnaissance, coverage-led
+  # hunting, adversarial validation, and verified machine-readable findings
+  # (findings.json) plus a derived report. Complements the engineering
+  # guidance above with vulnerability discovery rather than design advice,
+  # and overlaps with Android Intent/Permissions Security only for Android
+  # targets. Installs the single security-audit skill via the skills CLI for
+  # whichever agents are selected. Requires Node.js for its zero-dependency
+  # validators and an agent that supports parallel sub-agents; running
+  # target code needs an OS-enforced sandbox, otherwise leads stay
+  # needs_validation.
+  - source: "cloudflare/security-audit-skill"
+    name: "Security Audit"
+    description: "Multi-phase security audits with independently verified findings"
+    skills: ["security-audit"]
